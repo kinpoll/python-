@@ -62,23 +62,20 @@ git--是--代码协同管理工具
 远程仓库 ： 其他主机的git仓库
 
 
+
+
 八、git的基本操作命令
 
    初始化仓库
        git  init
-       
        * 初始化仓库后产生.git目录为git的管理目录，初始化仓库的         目录中的内容即可使用git管理
-
 
    查看工作分支状态
        git status
-       
        * 默认工作分支为master，可以通过创建新的分支切换
-
 
    文件提交到暂存区
        git  add  [file]
-
        * 可以一次提交多个内容，中间用空格隔开
        * 提交的内容可以使文件也可以是目录
        * 如果想将当前目录下所有内容都提交也可以使用 * 表示
@@ -87,67 +84,54 @@ git--是--代码协同管理工具
        git  rm  --cached  [file]      (如果是目录加 -r)
 
 
-    将暂存区记录的修改内容同步到本地仓库
+   将暂存区记录的修改内容同步到本地仓库
         git  commit   -m  "some message"
-
         * -m 为添加的附加信息
         * 当工作区和本地仓库内容一致是git status提示工作区干净
 
-
-    查看提交日志
+   查看提交日志
         git  log
         git  log   --pretty=oneline
 
 
-工作区操作
-
-    查看工作区文件和本地仓库的差异
-        git  diff  [file]
-
-    放弃工作区文件修改
-        git  checkout  --  [file]
-
-    恢复本地仓库文件到工作区
-        git  checkout  [file]
-
-
-文件的移动和删除
+   工作区操作
+       查看工作区文件和本地仓库的差异
+           git  diff  [file]
    
-    删除工作区文件并提交到暂存记录
-        git  rm  [file]
-
-    移动工作区文件并提交到暂存记录
-        git  mv  file  dir
- 
-    * rm  mv 的用法和shell命令rm mv相同，操作后直接commit同步      到本地仓库
-
-
-版本控制命令
+       放弃工作区文件修改
+           git  checkout  --  [file]
    
-    回到之前版本 
-        git  reset  --hard  HEAD^
-  
-        * HEAD 后几个^表示回到之前的几个版本
-
-    通过commit_id回到指定的版本
-        git  reset  --hard  commit_id
-
-
-    查看操作日志
-        git reflog
-
-        * 获取到操作记录后可以根据commit_id去往较新的版本
+       恢复本地仓库文件到工作区
+           git  checkout  [file]
+   
+   文件的移动和删除
+       删除工作区文件并提交到暂存记录
+           git  rm  [file]
+           
+       移动工作区文件并提交到暂存记录
+           git  mv  file  dir
+       * rm  mv 的用法和shell命令rm mv相同，操作后直接commit同步      到本地仓库
 
 
-标签管理
-
+   版本控制命令
+       回到之前版本 
+           git  reset  --hard  HEAD^
+           * HEAD 后几个^表示回到之前的几个版本
+   
+       通过commit_id回到指定的版本
+           git  reset  --hard  commit_id
+   
+       查看操作日志
+           git reflog
+           * 获取到操作记录后可以根据commit_id去往较新的版本
+   
+   
+九、标签管理
     什么是标签 ： 即在当前工作位置添加快照，保存项目的版本信息                  ，一般用于项目版本的迭代
 
     创建标签
         git  tag  v1.0
-
         * 默认会在最新的commit_id处打标签
-
 
         查看标签
            git  tag  查看所有标签
@@ -163,11 +147,10 @@ git--是--代码协同管理工具
            git  tag  -d  v2.0
 
 
-保存临时工作区
+十、保存临时工作区
 
    创建临时工作区
        git stash
-
        * 将工作区修改内容暂时封存，恢复到最近一个“干净”状态
 
    查看保存的工作区
@@ -175,12 +158,9 @@ git--是--代码协同管理工具
 
    应用某个工作区
        git stash apply stash@{1}
-     
        * 新的工作区总是为stash@{0}，老的工作区会向下排列
-
        应用上一个工作区，并删除之
        git  stash  pop
-
 
    删除工作区
        git  stash drop  stash@{0}  删除某一个

@@ -1,0 +1,397 @@
+day1回顾
+列表的方法
+L.append(x)　                  　返回None
+L.extend(iterable)  #+=        　返回None
+L.insert(index,value)          　返回None
+L.remove(x) #删除               　返回None
+L.clear()                       返回None
+L.pop([index]) #取出，           返回提取元素
+L.copy()   #复制，               返回一个列表
+L.count(value,begin,end)  #计数  返回计数
+L.sort(reverse=False) #升序 　　　返回None
+L.reverse() #反转 　　　　　　　　　返回None
+help(list) 查询列表使用方法
+
+常用列表函数
+len(x) 求容器中元素个数
+max(可迭代对象)/max(值1,值2,..)
+min(可迭代对象)/min(值1,值2,..)
+sum(可迭代对象)　
+any(可迭代对象)  any([]) #False
+all(可迭代对象)  all([]) #True
+
+浅拷贝和深拷贝：列表是可变的对象
+变量1=变量2　＃不复制
+变量1=列表2.copy #浅拷贝，只拷贝一层对象,少占用内存
+变量1=copy.deepcopy(列表2) #深拷贝，拷贝到深层对象
+
+字符串的方法：
+str.split(sep='')) 将字符串由sep分隔为列表
+s.join([])　　　　　将ｓ字符加入到列表分隔为字符串
+
+列表推导式
+  作用:
+    用简易方法生成列表
+  语法:
+    [表达式 for 变量 in 可迭代对象]
+    或
+    [表达式 for 变量 in 可迭代对象 if 真值表达式]
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+day2
+
+元祖　tuple
+ 元祖是不可变的序列；
+ 同list一样，元祖可以存放任意类型的数据
+表示方式：
+ 用小括号()括起来，单个元素括起来后加逗号(,)区分单个对象还是元祖
+创建空元祖的字面值表示方式：
+ t=() #空元祖
+创建非空元祖的字面值表示方式：
+ t=200, #含有一个元素的元祖
+ t=(20,)#含有一个元素的元祖
+ t=(1,2,3)
+ t=100,200,300
+
+type(x)函数：返回一个对象的类型
+
+元祖的错误示例：
+t=(20)#t绑定为整数20
+x,y,z=100,200,300#序列赋值，不是元祖
+x,y,z=[100,200,300]
+x,y,z=(100,200,300)#列表元素赋值，非元祖
+x,y,z="abc"#序列赋值，可迭代对象个数要和变量个数一致
+
+元祖的构造函数
+tuple() 创建空元祖等同于()
+tuple(iterable) 用可迭代对象生成一个元祖
+示例：
+t=tuple()　　　　　#空元祖
+t=tuple(range(1,10,3))
+t=tuple("ABC")
+t=tuple([1,2,3])
+
+元祖可以参加运算：
+　+ += * *= 
+　< <= > >= != ==
+　in /not in 
+　索引/切片
+示例：
+　t=(1,'二','three')+(4.5,True,None)#(1,'二','three',4.5,True,None)
+　t=(1,2,3)
+　t+=(4,5,6)#t=(1,2,3,4,5,6);id(t)前后会变
+
+元祖的比较运算规则等同于列表的比较规则
+ (1,3,2)>(1,2,3)#True
+ 1,2,3>1,2 #(1,2,True,2) >的优先级比','高
+ (1,2,3)>(1,2)#True
+ (1,'二')>('二',1)#TypeError
+ (1,'二')!=('二',1)#True
+
+元祖in/not in运算符
+ 同列表的in运算符，用于检查一个值是否存在于元祖中，如果存在返回True，否则返回False
+ not in与in相反
+如：
+ 2 in (1,2,3)#True
+ 100 in (1,2,3)#False 
+ "abc" not in (1,2,3)#True 
+
+元祖的索引和切片操作：用法大致等同于列表，但是元祖不支持索引和切片的赋值操作
+如：
+ t=(1,2,3,4)
+ print(t[2])#3
+
+元祖的方法：
+help(tuple)
+tuple.count(x) #返回计数
+tuple.index(x[,begin[,end]]) #返回下标
+常用元祖函数：
+len(x)/max(x)/min(x)
+sun(x)/any(x)/all(x)
+
+序列的构造函数：
+ str([obj])
+ list([iterable])
+ tuple([iterable])
+序列的反转函数：
+ reversed(iterable) #返回反向顺序的可迭代对象
+ 如：
+ for x in reversed("ABC")
+     print(x) #CBA
+
+字典 dict
+ 1.字典是一种可变的容器，可以存储任意类型的数据
+ 2.字典中的每个数据都是用“键”(key)进行索引，而不像序列（字符串女女女，列表，元素）可以用索引下标进行索引
+ 3.字典中的数据没有先后关系，字典中的存储是无序的
+ 4.字典中的数据以键(key)-值(value)对形式进行映射储存
+ 5.字典的键不能重复，且只能用不可改变的类型作为字典的键
+
+字典的表示方法以{}括起来，以冒号(:)分隔键值对，各键值对之间用逗号分开
+
+创建空字典的字面值：
+ d={}#空字典
+创建非空字典的字面值：
+ d={'name':'kinpoll','age':24}
+ d={100:'一百',}
+ d={'a':tuple('abc')}#值为元祖
+ d={True:'真值'}
+ d={(1970,1,1):'计算机元年'}
+※字典的值可以是任意类型，字典的键只能是不可变类型
+不可变类型：
+ bool,int,float,complex,str,tuple,frozenset(固定集合),bytes(字节串)
+可变的类型：
+ list,dict,set(集合),bytearray(字节数组)
+
+字典的构造函数
+ dict():生成一个空字典，等同于{}
+ dict(iterable)用可迭代对象初始化一个字典
+ dict(**kwargs)用关键字传参形式生成一个字典
+示例：
+ d=dict()
+ d=dict([('name','tarena'),('age',15)])#可迭代对象提供的数据必须是有两个元素的序列
+ d=dict(name='tarena',age=15)
+
+字典的基本操作
+1.字典的键索引取值：
+ 语法：
+  字典[键]
+ 作用：用[]运算符进行取值操作
+ 示例：
+  d={'name':'tarena','age':16}
+  print(d['name'],'今年',d['age'],'岁')
+2.添加和修改字典元素：
+ 语法：
+  字典[键]=值
+ 说明：
+  键不存在，创建键并绑定键对应的值
+  键存在，修改键绑定的值
+ 示例：
+  d={}
+  d['name']='tarena'#创建新键值对
+  d['age']=15#创建新键值对
+  d['age']=16#修改age键绑定的值
+练习：
+创建一个字典：
+d={'name':'tarena','age':15}
+为此字典添加地址（address）键，对应的值为"北京市海淀区"，结果如下：
+d={'name':'tarena','age':15,'address':"北京市海淀区"}
+----
+d={'name':'tarena','age':15}  #字面值
+#或d=dict(name='tarena',age=15) #关键字传参
+d['address']="北京市海淀区"
+print(d)
+----
+3.删除字典键值对
+ del语句
+ 语法：
+  del 字典[键]
+ 示例：
+  d={'name':'tarena','age':15}
+  a=100
+  b=200
+  d[a]=b 
+  print(d) #{100:200,'name':'tarena','age':15}
+  del d[100] #删除键100 
+  print(d) #{'name':'tarena','age':15}
+4.字典的in/not in运算符
+ ①可以用in运算符来判断一个键是否存在于字典中，如果存在则返回True，否则返回False
+ ②not in与in返回值相反
+ 示例：
+  d={'a':100,200:"二百"}
+  'a' in d #返回True
+  200 in d #True
+  100 in d #False 
+  100 not in d #True 
+练习：
+写程序输入一个整数判断是哪一个季度，若不在范围内则输出不存在（创建字典）
+----
+seasons={1:'apring is 1,2,3yue',2:'summer is 4,5,6yue',3:'autumn is 7,8,9yue',4:'winter is 10,11,12yue'}
+i=int(input('any int for seasons:'))
+if i in seasons:
+    print(seasons[i])
+if i not in seasons:
+    print('txt is not exist')
+----
+5.字典的迭代访问：
+ 字典是可迭代对象，字典只能对键进行迭代访问
+示例：
+ d={'name':'tarena',(2002,1,1):"生日"}
+ for k in d:  #k用来绑定字典的键
+     print(k)
+
+可以用于字典的内建函数
+ len(x) 返回字典的键值对的个数
+ max(x)返回字典键的最大值
+ min(x)返回字典键的最小值
+ sum(x)返回字典中所有键的和
+ any(x)真值测试，如果字典中其中一个键为真值则返回True
+ all(x)真值测试，如果字典中全部键为真值才返回True
+ 示例：
+  d={0:'零',5:'伍',8:'捌',3:'叁'}
+  len(d) #4
+  max(d) #8
+  sum(d) #16
+  any(d) #True
+  all(d) #False
+
+字典的方法：
+函数 	                说明
+D代表字典对象 	
+D.clear() 	           清空字典
+D.pop(key) 	           移除键，同时返回此键所对应的值
+D.copy() 	           返回字典D的副本,只复制一层(浅拷贝)
+D.update(D2) 	       将字典 D2 合并到D中，如果键相同，则此键的值取D2的值作为新值
+D.get(key, default)    返回键key所对应的值,如果没有此键，则返回default
+	
+D.keys() 	           返回可迭代的 dict_keys 集合对象
+D.values() 	           返回可迭代的 dict_values 值对象
+D.items() 	           返回可迭代的 dict_items 对象
+--------
+示例：
+  d1={1:'One',2:'Two'}
+  d2={2:'er',3:'san'}
+  d1.update(d2)
+  print(d1)    #{1:'One',2:'er',3:'san'}
+  print(d2)    #{2:'er',3:'san'}
+  v=d1.get(1)  # v=d1[1]
+  print(v)     #'One'
+  x=d1.get(5,"no key-value")
+  print(x)     #"no key-value"
+  -----
+  d1={1:'One',2:'Two',3:'Three'}   
+  for t in d1.items():
+      print('字典的键值对为：',t)
+  ------
+  d1={1:'One',2:'Two',3:'Three'}   
+  for k in d1.keys():
+      print('字典的键为：',k)
+  ------
+  d1={1:'One',2:'Two',3:'Three'} 
+  for v in d1.values():
+      print('字典的值为：',v)
+  ------
+  d1={1:'One',2:'Two',3:'Three'}   
+  for k,v in d1.items():
+      print(k,'的值为：',v)
+------
+练习：
+输入一段字符串，打印出这个字符串中出现过的字符及出现过的次数
+如：
+ 输入:
+  ABCDABCABA
+ 打印：
+  a:4次
+  b:3次
+  d:1次
+  c:2次
+方法一------------------------------------
+s=input("请输入一段字符串：")
+d={}
+for ch in s:#ch绑定每一个字符
+    if ch in d:
+        d[ch]+=1    #1.如果ch已经出现过，将原有计数加1
+    else:
+        d[ch]=1    #2.ch没有出现过,要在d内创建ch键,值为1
+print(d)
+#打印结果
+for k,v in d.items():
+    print(k,':',v,'次')
+方法二------------------------------------
+L=[]
+s=input("请输入一段字符串：")
+for ch in s:
+    if ch not in L:
+        L.append(ch)
+for ch in L:
+    print(ch,':',s.count(ch),'次')
+
+字典的推导式：
+ 字典推导式是用可迭代对象依次生成字典内元素的表达式
+语法：
+ {键表达式：值表达式 for 变量 in 可迭代对象[if真值表达式]}
+注：
+ []的内容代表可以省略
+示例：
+ #生成一个字典，键为数字1~9,值为键的平方
+ d={x:x**2 for x in range(1,10)}
+--------------------------------------------
+练习：
+1.输入一段字符串，打印出这个字符串中出现过的字符及出现过的次数
+如：
+ 输入:
+  ABCDABCABA
+ 打印：
+  a:4次
+  b:3次
+  d:1次
+  c:2次
+------------
+s=input("请输入一段字符串：")
+d={k:s.count(k) for k in s}
+for k,v in d.items():
+    print(k,':',v,'次')
+--------------
+2.有如下字符串：
+  L=['tarena','kinpoll','hello']
+  要生成键为单词，值为长度的字典：
+---------
+L=['tarena','kinpoll','hello']
+d={x:len(x) for x in L }
+print(d)
+---------
+
+字典VS列表：
+1.都是可变的容器
+2.索引方式疏同，列表用整数索引，字典用键索引
+3.字典的插入，删除，修改的速度可能快于列表（重要）
+4.列表的存储是有序的，字典的储存时无序的
+-----------------------------------------------
+练习：
+1.已知有两个等长的列表
+list1=[1001,1002,1003,1004]
+list2=['Tom','Jerry','Spike','Tyke']
+写程序生成一下字典：
+{'Tom':1001,'Jerry':1002,'Spike':1003,'Tyke':1004}
+------------------
+list1=[1001,1002,1003,1004]
+list2=['Tom','Jerry','Spike','Tyke']
+print({list2[x]:list1[x] for x in range(0,len(list1))})
+------------------
+2.任意输入多个学生的姓名，年龄，成绩，每个学生信息存入一个字典中，然后再放入列表中（每个学生信息要手动输入）
+如：
+请输入姓名：tarena
+请输入年龄：15
+请输入成绩：99
+请输入姓名：name2
+请输入年龄：22
+请输入成绩：100
+请输入姓名：<直接回车结束输入>
+在程序内部生成如下列表：
+L=[{'name':tarena,'age':15,'score':99},{'name':name2,'age':22,'score':100}]
+①打印出上述列表
+②以下列表格的形式打印出上述信息
++------------+------------+------------+
+|    name    |     age    |    score   |
++------------+------------+------------+
+|  tarena    |     15     |      99    | 
+|   name2    |     22     |      100   |  
++------------+------------+------------+
+----------------------------------------------------
+L=[]
+while True:
+    x=input("请输入姓名:")
+    if x=='':
+        break
+    y=input("请输入年龄:")
+    z=input("请输入成绩:")
+    d={'name':x,'age':y,'score':z}
+    L.append(d)
+print(L)
+print('+'+'-'*10+'+'+'-'*10+'+'+'-'*10+'+')
+print('|'+'name'.center(10)+'|'+'age'.center(10)+'|'+'score'.center(10)+'|')
+print('+'+'-'*10+'+'+'-'*10+'+'+'-'*10+'+')
+i=0
+while i<=(len(L)-1):
+    print('|'+L[i]['name'].center(10)+'|'+L[i]['age'].center(10)+'|'+L[i]['score'].center(10)+'|')
+    i+=1
+print('+'+'-'*10+'+'+'-'*10+'+'+'-'*10+'+')
+--------------------------------------------------------

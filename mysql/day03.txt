@@ -1,0 +1,295 @@
+总结：
+               表字段(alter table 表名)               表记录
+      增加         add                               insert
+      删除         drop                              delete
+      修改         modify                            update
+      查询         desc                              select
+*********************************
+Day03笔记
+1、SQL查询
+  1、distinct : 不显示字段的重复值（去重）
+    1、语法 ：select distinct 字段1,字段2 from 表名;
+    2、示例
+      1、表中都有哪些国家
+        select distinct country from sanguo;
+      2、表中一共有几个国家
+        select count(distinct country) as n from sanguo;
+    3、注意
+      1、distinct和from之间的所有字段值都相同才会去重
+  2、查询表记录时可以做数学运算
+    1、运算符 ：+ - * / % 
+    2、示例
+      1、查询时显示所有英雄攻击力翻倍
+        select id,name,gongji*2 as new from sanguo;
+　３、嵌套查询（子查询）：
+    1.定义：把内层的查询结果作为外层的查询条件
+    2.语法格式：
+      select ... from 表名　where 字段名　运算符（select ...）
+    3.示例：
+      1.把攻击值小于平均攻击值的英雄名字和攻击值查出来
+      select name,gongji from sanguo where gongji < (select avg(gongji) from sanguo);
+      2.找出每个国家攻击力最高的英雄的名字和攻击值
+      select name,country,gongji from sanguo where gongji in (select max(gongji) from sanguo group by country);
+  4、多表查询
+    1.两种方式：
+      1.不加where条件（笛卡尔积）
+        select t1.name,t2.name from t1,t2;(t1表内的每条记录匹配t2表内的所有记录)
+      2.加where条件
+        select 字段名列表 from 表1,表2 where 条件；
+      3.示例：
+      　1.查询省、市详细信息
+          select sheng.s_name,city.c_name from sheng,city where sheng.s_id=city.cfather_id;
+          如：
+          河北省　廊坊市
+          河北省　石家庄市
+          湖北省　武汉市...
+        2.查询省、市、县详细信息
+          select sheng.s_name,city.c_name,xian.x_name from sheng,city,xian where sheng.s_id=city.cfather_id and xian.xfather_id=city.c_id;
+  5、连接查询
+    1.内连接(inner join)
+        1.语法结构
+          select ... from 表1 inner join 表2 on 条件
+          inner join 表3 on 条件;
+        2.示例：
+          1.查找省市详细信息
+          select sheng.s_name,city.c_name from sheng inner join city on sheng.s_id=city.cfather_id;（查询效果和多表查询加where条件一致）
+          select sheng.s_name,city.c_name,xian.x_name from sheng inner join city on sheng.s_id=city.cfather_id inner join xian on xian.xfather_id=city.c_id;
+    2.外连接
+        1.左连接(left join)
+            1.以左表为主显示查询结果
+             select sheng.s_name,city.c_name from sheng left join city on sheng.s_id=city.cfather_id;
+
+        2.右连接(right join)
+            1.以右表为主显示查询结果
+             select sheng.s_name,city.c_name from sheng right join city on sheng.s_id=city.cfather_id;
+             select sheng.s_name,city.c_name,xian.x_name from sheng left join city on sheng.s_id=city.cfather_id  right join xian on city.c_id=xian.xfather_id;
+
+2、约束
+  1、作用 ：保证数据的一致性、有效性
+  2、约束分类
+    1、默认约束(default)
+      插入记录时,不给该字段赋值,则使用默认值
+      sex enum("M","F","S") default "S",
+    2、非空约束(not null)
+      不允许该字段的值为 NULL
+      id int not null,
+      id int not null default 0,
+3、索引(索引信息和表结构存储在：/var/lib/mysql/库名/表名.frm)
+  1、定义
+    对数据库中表的一列或多列的值进行排序的一种结构(BTree)
+  2、优点
+    加快数据的检索速度
+  3、缺点
+    1、当对表中数据更新时,索引需要动态维护,占用系统资源,降低数据的维护速度
+    2、索引需要占用物理存储空间
+4、索引示例
+  1、开启运行时间检测 ：mysql> set profiling=1;
+  2、执行查询语句
+    select name from t1 where name="lucy99999"; 
+  3、查看执行时间 
+    show profiles;
+  4、在name字段创建索引
+    create index name on t1(name);
+  5、再次执行查询语句
+    select name from t1 where name="lucy100000";
+  6、查看执行时间
+    show profiles;
+5、索引
+  1、普通索引(index)
+    1、使用规则
+      1、可设置多个字段,字段值无约束
+      2、把经常用来查询的字段设置为索引字段
+      3、KEY标志 ：MUL
+    2、创建
+      1、创建表时
+        create table t1(
+	                    ...,
+	                    ...,
+	                    index(name),
+	                    index(id));
+      2、已有表中
+        create index 索引名 on 表名(字段名);
+    3、查看索引
+      1、desc 表名; -->KEY标志为 MUL
+      2、show index from 表名\G;
+    4、删除index
+      drop index 索引名 on 表名;
+  2、唯一索引(unique)
+    1、使用规则
+      1、可设置多个字段
+      2、约束 ：字段值不允许重复,但可以为 NULL
+      3、KEY标志 ：UNI
+    2、创建
+      1、创建表时
+        unique(phnumber),
+	    unique(cardnumber)
+      2、已有表
+        create unique index 索引名 on 表名(字段名);
+    3、查看、删除同普通索引
+      删除 ：drop index 索引名 on 表名;
+  3、主键索引(primary key)&&自增长(auto_increment)
+    1、使用规则
+      1、只能有1个字段为主键字段
+      2、约束 ：字段值不允许重复,也不能为 NULL
+      3、KEY标志 ：PRI
+      4、通常设置记录编号字段 id,能够唯一锁定一条记录
+    2、创建
+      1、创建表时
+          1、create table t1(
+             id int primary key auto_increment,
+	         name varchar(20) not null
+	         )auto_increment=10000,charset=utf8,engine=InnoDB;
+	      2、复合主键
+             create table t1(
+	         id int auto_increment,
+	         name varchar(20),
+	         primary key(id,name))...;
+      2、已有表
+           alter table 表名 add primary key(id);
+	         alter table 表名 modify id int auto_increment;
+	         alter table 表名 auto_increment=10000;
+
+    3、删除主键
+      1、先删除自增长属性(modify)
+        alter table 表名 modify id int;
+      2、删除主键
+        alter table 表名 drop primary key;
+  4、外键(foreign key)
+      1.定义：让当前表字段的值在另一个表的范围内选择
+      2.语法格式：
+        foreign key(参考字段名) references 主表(被参考字段名) on delete 级联动作　on update 级联动作
+      3.使用规则：
+        ①主表、从表字段数据类型要一致
+        ②主表被参考字段：主键
+      4.创建示例：
+        ①创建表时添加外键
+        >缴费信息表（财务）
+          id 姓名　   班级　  缴费金额
+          1  唐伯虎   AID08    300
+          2  点秋香   AID08    200
+        create table jftab(
+        id int primary key,
+        name varchar(20) not NULL,
+        class varchar(5) default 'AID08',
+        money smallint)charset=utf8;
+    
+        insert into jftab values
+        (1,'唐伯虎','AID08',300),
+        (2,'点秋香','AID08',200);
+        >学生信息表（班主任）
+          stu_id     姓名　    缴费金额
+          1
+          2
+        create table bjtab(
+        stu_id int,
+        name varchar(15),
+        money smallint,
+        foreign key (stu_id) references jftab(id) on delete cascade on update cascade
+        )charset=utf8;
+        ②在已有表时添加一个外键
+          alter table bjtab add [constraight 外键名] foreign key (stu_id) references jftab(id) on delete set NULL on update set NULL;
+      5.删除外键索引
+        1.查看外键名
+          show create table bjtab;
+        2.删除外键
+          alter table 表名 drop foreign key 外键名;
+      6.级联动作
+        1.cascade:数据级联删除，级联更新（参考字段）
+        2.set NULL:从表如果有相关联记录，字段值设置为NULL
+        3.restrict(默认):从表有相关联记录，不让主表删除、更新
+----------------------------------------------------------------------------------------------------------------------
+综述：两张表，一张顾客信息表customers，一张订单表orders
+1、创建一张顾客信息表customers，字段要求如下：
+  c_id 类型为整型，设置为主键，并设置为自增长属性
+  c_name 字符类型，变长，宽度为20
+  c_age 微小整型，取值范围为0~255(无符号)
+  c_sex 枚举类型，要求只能在('M','F')中选择一个值
+  c_city 字符类型，变长，宽度为20
+  c_salary 浮点类型，要求整数部分最大为10位，小数部分为2位
+
+  在表中任意插入3条记录,c_name为"Zhangsan","Lisi","Wangwu", c_city尽量	写"Beijing","Shanghai" ......
+create table customers( c_id int primary key auto_increment, c_name varchar(20), c_age tinyint unsigned, c_sex enum('M','F'), c_city varchar(20), c_salary double(12,2) )charset=utf8;
+
+    insert into customers values
+    (1,"Zhangsan",25,"M","Beijing",8000),
+    (2,"Lisi",30,"F","Shanghai",10000),
+    (3,"Wangwu",27,"M","Shenzhen",8000);
+---------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------------------------------------
+
+2、创建一张订单表orders，字段要求如下：
+  o_id 整型
+  o_name 字符类型，变长，宽度为30
+  o_price 浮点类型，整数最大为10位，小数部分为2位
+  设置此表中的o_id字段为customers表中c_id字段的外键,更新删除同步
+
+create table orders(o_id int,o_name varchar(30),o_price double(12,2),foreign key (o_id) references customers(c_id) on delete cascade on update cascade)charset=utf8;
+
+  在表中任意插入5条记录(注意外键限制)
+  o_name分别为"iphone","ipad","iwatch","mate9","r11",其他信息自己定
+    insert into orders values
+    (1,"iphone",5288),
+    (1,"ipad",3299),
+    (3,"mate9",3688),
+    (2,"iwatch",2222),
+    (2,"r11",4400);
+
+3、返回customers表中，工资大于4000元，或者年龄小于29岁，满足这样条件的前2条记录
+select * from customers where c_salary >4000 or  c_age <29  limit 2;
+
+4、把customers表中，年龄大于等于25岁，并且地址是北京或者上海，这样的人的工资上调15%
+update customers set c_salary=c_salary*1.15 where c_age>25 and c_city in ('Beijing','Shanghai');
+
+5、把customers表中，城市为北京的顾客，按照工资降序排列，并且只返回结果中的第一条记录	
+select * from customers where c_city = 'Beijing' order by c_salary DESC  limit 0,1 ;
+
+6、选择工资c_salary最少的顾客的信息
+select * from customers where c_salary=(select min(c_salary) from customers);
+	
+7、找到工资大于5000的顾客都买过哪些产品的记录明细
+select c_name,o_name from customers,orders where c_id=o_id and c_salary>5000;
+select * from orders where o_id in (select c_id from customers where c_salary >5000);				
+8、删除外键限制
+show create table orders;
+找到外键名
+alter table orders drop foreign key orders_ibfk_1;
+			
+9、删除customers主键限制
+  1、删除自增长属性
+  2、删除主键限制
+
+---------------------------------------------------------------------------------------------------------------------------
+alter table customers modify c_id int not NULL default 0;
+alter table customers drop primary key ;
+---------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+        
+
+	 
+
+    
+
+
+
+
+
+        
+
+  
+  
+
+
+
+    
+
+
+
+

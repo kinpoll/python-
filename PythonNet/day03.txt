@@ -1,0 +1,367 @@
+一、tcp应用之http传输
+  1.http协议：超文本传输协议，是一个应用层协议
+    1.用途：
+      网页的获取，数据的传输
+    2.特点：
+      １．应用层协议，传输层选择tcp传输
+      ２．简单，灵活，很多语言都有http专门接口
+      ３．无状态协议，协议本身不要求记录传输的数据
+      ４．http1.1 支持持久连接
+    3.网页请求过程：
+      １．客户端（浏览器）通过tcp传输发送http请求给服务端
+      ２．服务端接收到http请求后进行解析
+      ３．服务端处理具体请求内容，组织响应内容
+      ４．将响应内容以http响应格式回发给浏览器
+      ５．浏览器接收响应内容解析展示
+  2.http请求：request
+    请求格式：
+      1.请求行：具体的请求类别和请求路径
+        >格式：   GET   /abc.html   HTTP/1.1
+               请求类别　　请求内容　　协议版本
+        >请求类别：每种类别代表要做不同的事情
+          GET:获取网络资源
+          POST：提交一定的信息，得到反馈
+          HEAD：获取响应头
+          PUT：更新服务器资源
+          DELETE：删除服务器资源
+          CONNECT：
+          TRACE：测试
+          OPTIONS：获取服务器性能信息
+      2.请求头：对请求内容的基本描述(以键值对的形式)
+      *(空行)
+      3.请求体：请求参数或者提交内容
+示例:http_test.py
+-----------------------------------------------------------------------------------
+from socket import *
+# 创建套接字
+s = socket()
+s.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+s.bind(('0.0.0.0', 8888))
+s.listen(3)
+
+while True:
+    c, addr = s.accept()
+    print('Connect from', addr)
+    msg = c.recv(4096)
+    print('******************')
+    print(msg)
+    print('******************')
+
+    data = '''http/1.1 200 ok
+    Content-Encoding:utf8
+    Content-Type:text/html
+
+    <h1>Welcome to wang-ze-yu tedu Python</h1>
+    <p>这是一个测试</p>
+    '''
+    c.send(data.encode())#发送给浏览器
+    c.close()
+s.close()
+-------------------------------------------------------------------------------------
+  3.http相应（response）
+    响应格式：
+      1.响应行：反馈基本的响应情况
+      　>格式：http/1.1  200  　　OK
+                版本　　　响应码　附加信息
+        >响应码分类：
+          1xx:提示信息表示请求被接收
+          2xx:表示响应成功-->(200成功)
+          3xx:响应需要进一步操作，重定向
+          4xx:客户端错误-->(404访问内容不存在／401没有访问权限)
+          5xx:服务器错误-->(500服务器未知异常)
+
+      2.响应头：对响应内容的描述(以键值对的形式描述)
+      *空行
+      3.响应体：具体的响应内容
+示例：
+-------------------------http_server.py---------------------------------------------
+from socket import *
+#接收request，发送response
+def handleClient(connfd):
+    request=connfd.recv(4096)
+    #将request按行切割
+    request_lines=request.splitlines()
+    #暂时不做过多解析
+    for line in request_lines:
+        print(line)
+    try:
+        f=open('index.html','r')
+    except IOError:
+        response='HTTP/1.1 404 Not Found\r\n'
+        response+='\r\n'#空行
+        response+='====Sorry not found===='
+    else:
+        response='HTTP/1.1 200 OK\r\n'
+        response+='\r\n'#空行
+        response+=f.read()
+    finally:
+        #无论什么结果都发送给浏览器
+        connfd.send(response.encode())
+
+
+
+#创建套接字
+def main():
+    sockfd = socket()
+    sockfd.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+    sockfd.bind(('0.0.0.0',8888))
+    sockfd.listen(3)
+    print('Listen to the port 8888')
+    while True:
+        connfd,addr=sockfd.accept()
+        #处理请求
+        handleClient(connfd)
+        connfd.close()
+if __name__=='__main__':
+    main()
+---------------------------index.html--------------------------------------
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>主页</title>
+</head>
+<body>
+   <h1>My first html page</h1>  
+</body>
+</html>
+----------------------------------------------------------------------
+二、IO(INOUT/OUTPUT)
+  1.在内存中存在数据交互的操作认为是IO操作:
+    如：
+      1.和终端交互：input print
+      2.和磁盘交互：read  write
+      3.和网络交互：recv  send
+  2.程序根据操作分类：
+      1.IO密集型程序:
+        在程序中有大量的IO操作，而CPU运算比较少(如文件拷贝，网络消息的收发)-->消耗CPU资源少，耗时长，效率并不高
+      2.计算密集型程序(CPU密集型程序):
+        程序中计算较多，IO操作较少-->消耗CPU较多，运算速度快
+  3.IO类型：
+      1.阻塞IO:
+        1.阻塞IO是IO的默认形态，是效率低的一种情形
+        2.阻塞情况：
+          1.因为某种条件没有达成造成的函数阻塞-->(accept/input/recv)
+          2.处理IO的时间较长产生的阻塞行为-->(网络传输/大文件的读写)
+      2.非阻塞IO:
+        1.将原本的阻塞函数通过属性的修改使其变为非阻塞
+          1.sockfd.setblocking(bool)
+            功能：将套接字设置为非阻塞IO
+            参数：默认为True,表示套接字调用阻塞函数时为阻塞状态
+                 若设置为False,则表示调用阻塞函数变为非阻塞状态
+          2.注意：非阻塞IO通常和循环一起使用，不断执行任务，然后再检测IO行为是否满足条件
+示例：block_test.py
+------------------------------------------------
+from socket import *
+from time import sleep,ctime
+#tcp套接字
+sockfd=socket()
+sockfd.bind(('0.0.0.0',8888))
+sockfd.listen(3)
+#设置非阻塞状态
+sockfd.setblocking(False)
+
+while True:
+    print('Waiting for connect...')
+    try:
+        connfd,addr=sockfd.accept()
+    except BlockingIOError:
+        sleep(2)
+        print(ctime())
+        continue 
+    else:
+        print('Connect from',addr)
+        data=connfd.recv(1024)
+        print('Receive:',data.decode())
+        connfd.close()
+sockfd.close()
+-------------------------------------------------             
+        2.超时检测，即设置一个最长阻塞等待时间，超过时间后则不再阻塞
+          1.sockfd.settimeout(sec)
+            功能：设置套接字的超时时间
+            参数：设置的时间(秒)
+          2.注意：设置超时检测一定是在阻塞状态下
+示例：block_test.py
+--------------------------------------------------
+from socket import *
+from time import sleep,ctime
+#tcp套接字
+sockfd=socket()
+sockfd.bind(('0.0.0.0',8888))
+sockfd.listen(3)
+#设置超时时间
+sockfd.settimeout(5)
+
+while True:
+    print('Waiting for connect...')
+    try:
+        connfd,addr=sockfd.accept()
+    except timeout:
+        print(ctime())
+        continue 
+    else:
+        print('Connect from',addr)
+        data=connfd.recv(1024)
+        print('Receive:',data.decode())
+        connfd.close()
+sockfd.close()
+------------------------------------------------------
+      3.IO多路复用(效率较高，应用比较广泛)
+        1.准备就绪的IO：IO能够操作，可以进行处理执行　
+        2.定义：同时监控多个IO时间，当哪个IO事件准备就绪就执行哪个IO事件。
+               以此形成可以同时操作多个IO的行为，避免一个IO阻塞造成其他的都无法执行，提高了执行效率。
+        3.具体方案：
+          1.系统支持
+            1.select:windows linux unix
+            2.poll:linux unix
+            3.epoll:linux unix
+          2.python模块
+            import select
+            1.select方法实现多路复用：
+              rs,ws,xs = select(rlist, wlist, xlist[, timeout]) 
+              功能：监控IO事件，阻塞等待IO发生
+              参数：
+                rlist 列表 [想要关注的等待发生的IO事件]
+                wlist 列表 [想要关注的可以主动处理的IO事件]
+                xlist 列表 [想要关注的出现异常去处理的IO事件]
+                timeout 超时时间　默认为阻塞设置超时后即阻塞一定的时间
+              返回值：
+                rs 列表 rlist中准备就绪的IO对象
+                ws 列表 wlist中准备就绪的IO对象
+                xs 列表 xlist中准备就绪的IO对象
+            2.基于select IO多路复用的tcp服务端
+              步骤：
+                1.将关注的IO放入对应类别的关注列表
+                2.通过select函数进行监控
+                3.遍历select返回值确定哪个IO事件发生
+                4.处理发生的IO事件
+              注意：　
+                wlist中如果存在IO事件，select会立即返回让你处理
+                在处理IO过程中不要出现死循环等长期占有服务端的情况
+                IO多路复用占用计算机资源较少，效率较高
+--------------------------------select函数示例-------------------------------------------------------------
+from select import select
+from socket import *
+s=socket()
+s.bind(('0.0.0.0',8888))
+s.listen(3)
+
+#关注套接字IO事件
+print('监控IO')
+re,ws,xs = select([s],[],[])
+print('处理IO')
+-------------------------------select_server.py-------------------------------------------------------------
+from select import select
+from socket import *
+#创建套接字
+s=socket()
+s.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+s.bind(('0.0.0.0',8888))
+s.listen(5)
+
+#添加到关注列表
+rlist=[s]
+wlist=[]
+xlist=[]
+while True:
+    #IO监控
+    rs,ws,xs = select(rlist,wlist,xlist)
+    for r in rs:
+        #如果r is s说明s就绪即有客户端发起连接
+        if r is s:
+            c,addr=r.accept()
+            print('Connect from',addr)
+            rlist.append(c)
+        #某个客户端连接套接字就绪
+        else:
+            data=r.recv(1024)
+            if not data:
+                rlist.remove(r)
+                r.close()
+                continue 
+            print('收到:',addr,data.decode())
+            # r.send('收到消息'.encode())
+            wlist.append(r)
+    for w in ws:
+        w.send(input().encode())
+        wlist.remove(w)
+    for x in xs:
+        x.close()
+        raise
+
+
+-------------------------------------------------------------------
+三、位运算
+& 按位与
+| 按位或
+^ 按位异或
+<<左移
+>>右移
+--------------------------------------------------------------------
+作业：
+1.熟练select服务端程序
+2.复习记忆http协议格式和各部分功能
+3.复习类(继承super __init__)
+------------------server.py(自写select服务端程序)----------------------------
+from socket import *
+from select import select
+sockfd=socket()
+sockfd.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+sockfd.bind(('0.0.0.0',8888))
+sockfd.listen(3)
+rlist=[sockfd]
+wlist=[]
+xlist=[]
+while True:
+    rs,ws,xs=select(rlist,wlist,xlist)
+    for r in rs:
+        if r is sockfd:
+            connfd,addr=r.accept()
+            rlist.append(connfd)
+        else:
+            data=r.recv(1024)
+            if not data:
+                rlist.remove(r)
+                r.close()
+                continue
+            print('客户端{}:{}'.format(addr,data.decode()))
+            wlist.append(r)
+    for w in ws:
+        msg=input('服务端:')
+        w.send(msg.encode())
+        wlist.remove(w)
+    for x in xs:
+        x.close()
+        raise
+-----------------------------------------------------------------------------------   
+------------------client.py(自写select客户端程序)----------------------------
+from socket import *
+from time import sleep
+sockfd=socket()
+while True:
+    try:
+        sockfd.connect(('127.0.0.1',8888))
+        break
+    except ConnectionRefusedError:
+        print('服务器无响应,请等待...')
+        sleep(2)
+while True:
+    data=input('客户端:')
+    if not data:
+        break
+    sockfd.send(data.encode())
+    msg=sockfd.recv(1024)
+    if not msg:
+        break
+    print('服务端:',msg.decode())
+sockfd.close()
+-----------------------------------------------------------------------------------   
+
+
+
+
+
+              
+

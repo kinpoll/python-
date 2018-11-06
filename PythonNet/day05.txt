@@ -1,0 +1,291 @@
+一、fork注意：
+1.进入阻塞态的进程一定会让出cpu时间片
+2.各个进程在自己的空间内对数据的操作不影响其他进程
+3.父进程在执行fork之前开辟的空间子进程也会复制
+----------------示例：fork.py------------------------------
+import os
+from time import *
+print('**************************')
+a=1
+pid=os.fork()
+if pid<0:
+    print('Create process failed')
+elif pid==0:
+    print('Child process')
+    print('child a=%d'%a)
+    a=10000
+else:
+    sleep(1)
+    print('Parent process')
+    print('parent a=',a)
+print('all a=',a)
+-------------------------------------------------------------
+二、进程相关函数
+
+1.获取进程PID
+import os
+  os.getpid()
+    功能:获取当前进程的进程号
+    返回值:返回进程ID号
+  
+  os.getppid()
+    功能:获取当前进程父进程的PID号
+    返回值:返回进程ID号
+
+2.进程退出
+import os,sys
+
+  os._exit(status)
+    功能:进程退出
+    参数:整数　表示自定义的进程退出状态
+  
+  sys.exit([status])
+    功能:进程退出
+    参数[可选]:整数　表示退出状态，不写默认为0
+                字符串　表示退出时打印的内容
+
+三、孤儿和僵尸进程
+1.孤儿进程： 父进程先于子进程退出，此时子进程就称为孤儿进程。
+* 孤儿进程会被操作系统指定的进程收养，系统进程就成为孤儿进程的新的父进程
+
+2.僵尸进程： 子进程先于父进程退出，但是父进程没有处理子进程的退出状态，此时子进程就会成为僵尸进程。
+* 僵尸进程会存留少量PCB信息在内存中，大量的僵尸进程会消耗系统资源，应该避免僵尸进程产生
+
+3.如何避免僵尸进程产生
+    1.处理子进程退出状态
+	pid,status = os.wait()
+	    功能 ：在父进程中阻塞等待处理子进程退出
+        返回值： pid 退出的子进程的PID号
+	        　  status  获取子进程退出状态
+--------------------------------------------------
+import os
+from time import sleep
+
+pid = os.fork()
+
+if pid < 0:
+    print("Create process failed")
+elif pid == 0:
+    sleep(3)
+    print('Child %d process exit' % os.getpid())
+    os._exit(2)
+
+else:
+    pid, status = os.wait()
+    print('child pid:', pid)
+    print('child exit status:',os.WEXITSTATUS(status))
+    #退出状态*256
+    # print('child exit status:',status)
+    print('Parent process...')
+    while True:
+        pass
+------------------------------------------------------
+        
+	pid,status = os.waitpid(pid，option)
+	    功能 ：在父进程中阻塞等待处理子进程退出
+	    参数: pid  -1 表示等待任意子进程退出
+	                 >0 表示等待指定PID号的子进程退出
+	    	    option  0 表示阻塞等待
+	    	    　　　　　WNOHANG 表示非阻塞
+        返回值： pid 退出的子进程的PID号
+	            status  获取子进程退出状态
+	    waitpid(-1,0)  ===> wait()
+
+    2.创建二级子进程
+       1. 父进程创建子进程等待子进程退出
+       2. 子进程创建二级子进程后立即退出
+       3. 二级子进程称为孤儿，和原来的父进程各自执行事件
+---------------------------------------------------------------------
+# 创建二级子进程，避免僵尸
+import os
+from time import sleep
+def f1():
+    sleep(3)
+    print('事件1...')
+def f2():
+    sleep(4)
+    print('事件2...')
+pid = os.fork()
+if pid < 0:
+    print('Error')
+elif pid == 0:
+    p = os.fork()  # 创建二级子进程
+    if p == 0:  # 二级子进程
+        f2()
+    else:
+        os._exit(0)  # 一级子进程退出
+else:
+    os.wait()  # 等待一级子进程
+    f1()
+---------------------------------------------------------------
+四、练习：
+
+应用-->群聊聊天室 
+①功能-->(类似qq群聊)
+    1. 进入聊天室需要输入姓名，姓名不能重复
+    2. 有人进入聊天室会向其他人发送通知："xxx进入了聊天室"
+    3. 一个人发消息，群里其他人会收到消息："xxx说：xxxxxxxx"
+    4. 某人退出聊天室，其他人也会收到通知："xxx退出了聊天室"
+    5. 管理员喊话,服务端发送消息所有的客户端都就收到："管理员说：xxxxxx"
+
+②功能模型-->转发,先发给服务器再转发给其他人
+
+③需要的技术-->套接字通信 udp套接字
+
+④用户存储-->字典或列表，存储姓名或地址
+
+⑤消息收发的随意性-->多进程，分别处理发送接收
+
+⑥整体设计：
+  1.封装 将每个功能封装为函数
+  2.接口测试　实现一个功能就测试一个功能
+  3.代码编写流程 搭建网络连接---->创建多进程---->每个进程功能编写---->项目功能模块实现
+
+⑧具体功能实现：
+　　　　*网络连接：
+　　　　　　服务端：创建套接字udp，绑定地址
+　　　　　　客户端：创建套接字udp
+　　　　*登录：
+　　　　　　服务端：接收姓名
+　　　　　　　　　　判断姓名是否存在
+　　　　　　　　　　根据判断结果返回相应信息
+　　　　　　　　　　如果不允许登录则功能结束
+　　　　　　　　　　如果允许登录将用于加入维护的数据结构
+　　　　　　　　　　将用户登录提示信息发给其他人
+　　　　　　客户端：输入姓名
+　　　　　　　　　　将姓名发送给服务端
+　　　　　　　　　　接收服务端确认信息
+　　　　　　　　　　如果不允许则重新输入
+　　　　　　　　　　如果允许进入聊天室
+　　　　　　　　　　创建新的进程，一个用于收消息，另一个用于发消息
+　　　　*聊天：
+　　　　　　客户端-->创建父子进程   循环发送聊天请求/接收聊天信息
+　　　　　　服务端-->接收请求信息  将消息转发给其他客户端
+　　　　*退出：
+　　　　　　客户端-->输入quit表示退出
+　　　　　　　　　　　发送退出信息给服务端
+　　　　　　　　　　　接收服务端发来的标志
+　　　　　　　　　　　客户端进程退出　
+　　　　　　服务端-->接收请求信息
+　　　　　　　　　　　确定消息类型
+　　　　　　　　　　　将用户从字典移除
+　　　　　　　　　　　给其他人发送通知
+　　　　　　　　　　　给退出的客户端发送标志
+　　　　*管理员消息-->服务端创建父子进程
+　　　　　　　　　　　子进程选择管理员喊话发送给父进程
+　　　　　　　　　　　父进程执行转发功能
+
+
+五、作业：
+1.梳理聊天室代码思路
+2.整理fork创建进程的特征
+--------------------------------------
+* 子进程会复制父进程全部代码段，包括fork之前产生的内存空间
+* 子进程从fork的下一句开始执行，与父进程互不干扰
+* 父子进程的执行顺序是不一定的，父子进程公用一个终端显示
+* 父子进程通常会根据fork返回值得差异选择执行不同的代码。所以if结构几乎是fork的固定搭配
+* 父子进程空间独立，操作的都是本空间的内容，互不影响
+* 子进程也有自己的特性，比如PID号，PCB，命令集等
+* 进入阻塞态的进程一定会让出cpu时间片
+* 各个进程在自己的空间内对数据的操作不影响其他进程
+* 父进程在执行fork之前开辟的空间子进程也会复制
+--------------------------------------
+
+3.创建父子进程同时复制一个文件，
+　各复制文件的一半到新的文件中
+-----------------------------------------
+进程创建注意：
+＊如果父子进程创建后，创建子进程，子进程从父进程获取对象，此时父子进程在对象操作上会有一定的相互影响
+eg:　套接字对象监听相同的端口，文件对象会使用同一个偏移量
+＊如果父进程先创建子进程，则父子进程中各自产生的对象没有任何关系
+------------------------------------------
+import os
+
+
+def copy(filepath=input('请输入被复制文件的路径:'), addr='/home/tarena/桌面/aid1808/o1.txt'):
+    fr = open(filepath, 'rb')
+    with open(addr, 'wb') as fw:
+        size = os.path.getsize(filepath)
+        count = size//2
+        while True:
+            data = fr.read(24)
+            if count < 64:
+                fw.write(fr.read(count))
+                fr.close()
+                break
+            fw.write(data)
+            count -= 24
+        fw.close()
+
+
+def copy1(filepath=input('请输入被复制文件的路径:'), addr='/home/tarena/桌面/aid1808/o2.txt'):
+    fr = open(filepath, 'rb')
+    with open(addr, 'wb') as fw:
+        size = os.path.getsize(filepath)
+        count = size//2
+        fr.seek(count, 0)
+        while True:
+            data = fr.read(24)
+            if not data:
+                fr.close()
+                break
+            fw.write(data)
+        fw.close()
+
+
+pid = os.fork()
+if pid < 0:
+    print('创建进程失败！')
+elif pid == 0:
+    copy()
+else:
+    copy1()
+------------------------------------------------------------------------------------------------------
+
+import os
+
+filename='/home/tarena/桌面/aid1808/o.jpg'
+#获取文件的大小
+size=os.path.getsize(filename)
+
+
+#父子进程共用一个读文件对象的话偏移量会互相影响,所以不能创建在这里
+#open(filename,'rb')
+
+def copy1():
+    n=size//2
+    f=open(filename,'rb')
+    fw=open('o1.jpg','wb')
+    while True:
+        data=f.read(64)
+        if n < 64:
+            fw.write(f.read(n))
+            break
+        fw.write(data)
+        n-=64
+    fw.close()
+    f.close()
+
+def copy2():
+    f=open(filename,'rb')
+    fw=open('o2.jpg','wb')
+    f.seek(size//2,0)
+    while True:
+        data=f.read(64)
+        if not data:
+            break
+        fw.write(data)
+    fw.close()
+    f.close()
+
+
+pid = os.fork()
+if pid < 0:
+    print('创建进程失败！')
+#复制上半部分
+elif pid == 0:
+    copy1()
+#复制下半部分
+else:
+    copy2()
+---------------------------------------------------------------------------------------------------------------

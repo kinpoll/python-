@@ -1,0 +1,429 @@
+函数式编程：
+函数式编程是指用一系列函数解决问题
+函数是一等公民
+说明：
+用每一个函数完成细小的功能，一系列函数的任意组合可以解决大问题
+函数仅接受输入并产生输出，不包括任何可能影响输出的内部状态
+函数的可重入性：
+当一个函数没有访问除局部变量以外的变量和数据，则此函数为可重入函数
+示例：
+可重入函数：
+def myadd1(x,y):
+    return x+y
+不可重入函数：
+s=0
+def myadd2(x,y):
+    global s
+    s+=x+y
+    return s
+高阶函数：High Order Function
+满足下列条件中的一个函数即为高阶函数
+　函数接收一个或多个函数作为参数传入
+　函数返回一个函数
+pyhton内建的高阶函数：
+　map,filter,sorted
+map函数
+map(func,*iterable)返回可迭代对象，用此可迭代对象将用func函数对可迭代对象iterable中的每个元素作为参数计算后得到结果，再返回。当最短的一个可迭代对象不再提供数据时迭代结束
+示例：
+----------------------
+def power2(x):
+    print('power2被调用，x=',x)
+    return x**2
+#生成一个可迭代对象，此可迭代对象可以生成1~9的自然数的平方
+for x in map(power2,range(1,10)):
+    print(x) #1,4,9..
+#power2被调用，x= 1
+#1
+#power2被调用，x= 2
+#4
+#power2被调用，x= 3
+#9
+#power2被调用，x= 4
+#16
+#power2被调用，x= 5
+#25
+#power2被调用，x= 6
+#36
+#power2被调用，x= 7
+#49
+#power2被调用，x= 8
+#64
+#power2被调用，x= 9
+#81
+---------------------
+for x in map(pow,range(1,5),range(4,0,-1)):
+    print(x)
+#1
+#8
+#9
+#4
+---------------------
+for x in map(pow,[1,2,3,4],[4,3,2,1],range(5,100)):
+    print(x)
+#1
+#2
+#2
+#4
+练习：
+求:1**2+2**2+3**2+...+9**2的和
+求:1**3+2**3+3**3+...+9**3的和
+求:1**9+2**8+3**7+...+9**1的和
+-----------------------------------
+s=0
+for x in map(pow,range(1,10),[2,2,2,2,2,2,2,2,2]):
+    s+=x
+print(s)
+#------------------------------
+print(sum(map(lambda x:x**3,range(1,10))))
+#------------------------------
+print(sum(map(pow,range(1,10),range(9,0,-1))))
+-------------------------------------
+filter函数:
+filter(func,iterable)返回一个可迭代对象，此可迭代对象将对iterable获取到的数据用func进行筛选；func将对iterable中的每个元素进行求值，返回False则丢弃，返回True则保留数据
+示例：
+------------
+#判断x是否是奇数
+def isodd(x):
+    return x%2==1
+#生成1~100之内的奇数
+for x in filter(isodd,range(1,101)):
+    print(x)
+even=[x for x in filter(lambda x:x%2==0,range(1,101))]
+print(even)
+----------------
+
+练习：
+把1~100之内的素数放在列表primes中
+----------------
+def isprime(x):
+    if x<2:
+        return False
+    for i in range(2,x):
+        if x%i==0:
+            return False
+    return True
+primes=[]
+primes=[x for x in filter(isprime,range(1,101))]
+print(primes)
+-------------------
+sorted函数：
+作用：
+将原可迭代对象的数据进行排序，生成排序后的列表
+格式：
+sorted(iterable,key=None,reserve=Fasle)--------------注意：字符串'100'和'98'即三位数字符串和两位数字符串的排序不能按照整数或浮点数的大小逻辑排序，需转化为整型数或浮点型数
+说明：
+iterable是可迭代对象
+key函数是用来提供比较值的函数，这个值将作为排序的依据
+reverse标志用来设置是否降序排序
+示例：
+-------------
+L=[5,-2,-4,0,3,1]
+L2=sorted(L)
+print(L2)
+L3=sorted(L,reverse=True)
+print(L3)
+L4=sorted(L,key=abs,reverse=True)
+print(L4)
+---------------
+names=['Tom','Jerry','spike','Tyke']
+L=sorted(names,key=len)
+print(L)
+#按照字符串长度排序
+-----------------
+练习：
+names=['Tom','Jerry','Spike','Tyke']
+排序的依据为'moT' 'yrreJ' 'ekipS' 'ekyT'
+结果是：
+['Spike','Tyke','Tom','Jerry']
+------------------------
+names=['Tom','Jerry','Spike','Tyke']
+def sorts(s):
+    r=s[::-1]
+    print('字符串',s,'排序的依据是：',r)
+    return r
+L=sorted(names,key=sorts)
+print(L)
+------------------------
+
+递归函数recursion
+直接或间接的调用自身
+示例：
+def say_story():
+    print('从前有座山，山上有座庙，庙里有个老和尚讲故事：')
+    say_story()
+    print('讲故事结束')
+say_story()
+-----------------
+#函数直接调用自己
+def f1():
+    f1()
+f1()
+-----------------
+#函数间接调用自己
+def fa():
+    fb()
+def fb():
+    fa()
+fa()
+-----------------
+递归说明：
+递归一定要控制递归层数，当符合一定条件时要终止递归调用
+几乎所有的递归都能用while循环来代替
+优缺点：
+优点是可以吧问题简单化，让思路更为清晰，代码更为简洁
+缺点是因为系统环境影响大，当递归深度太大时，可能会得到不可预知的结果
+
+递归函数调用分为两个阶段：
+１．递推阶段
+从原问题出发，按递归公式递推从未知到已知，最终达到递归终止条件
+２．回归阶段
+按照递归终止条件求出结果，逆向逐步代入递归公式，回归原问题求解
+示例:
+------------------
+def fx(n):
+    print('递归进入第',n,'层')
+    if n==3:
+        return 
+    fx(n+1)#进入下一层
+
+    print('递归退出第',n,'层')
+fx(1)
+print('程序结束')
+#递归进入第 1 层
+#递归进入第 2 层
+#递归进入第 3 层
+#递归退出第 2 层
+#递归退出第 1 层
+#程序结束
+---------------------
+#用递归的方法来求取阶乘
+def myfac(n):
+    if n==1:
+        return 1
+    return n*myfac(n-1)
+print(myfac(5)) 
+----------------------
+练习：用递归的方法求1+2+3+...+n的和
+def mysum(n):
+    ...
+print(musum(100))#5050
+--------------------
+def mysum(n):
+    if n==1:
+        return 1
+    return n+mysum(n-1)
+print(mysum(100))#5050
+---------------------------
+思考题：
+已知有五位朋友在一起
+第五位朋友说他比第四位朋友大２岁
+第四位朋友说他比第三位朋友大２岁
+第三位朋友说他比第二位朋友大２岁
+第二位朋友说他比第一位朋友大２岁
+第一位朋友说他１０岁
+def getage(n):第n个人的年龄
+--------------
+def getage(n):
+    if n==1:
+        return 10
+    return 2+getage(n-1)
+print(getage(5))
+---------------
+
+闭包closure
+闭包是引用了此函数外部变量的函数
+闭包必须满足三个条件：
+１．必须有内嵌函数
+２．内嵌函数必须引用外部函数中的变量
+３．外部函数返回值必须是内嵌函数
+示例：
+-------------------------------
+#定义很多个函数求x**y次方,y是可变的
+# def pow2(x):
+#     return x**2
+# def pow3(x):
+#     return x**3
+# ....
+# ....
+# ....
+# def pow99(x):
+#     return x**99
+
+def make_power(y):
+    def fn(x):
+        return x**y
+    return fn
+pow2=make_power(2)
+print('5的平方是：',pow2(5))
+--------------------------------
+def fy(a,b,c):
+    def fx(x):
+        return a*x**2+b*x+c
+    return fx
+f123=fy(1,2,3)
+print(f123(20))
+print(f123(50))
+f456=fy(4,5,6)
+print(f456(20))
+print(f456(50))
+--------------------------
+练习：
+１．编写程序求１～２０的阶乘的和
+即：
+１！！２！＋．．！２０！
+－－－－－－－－－－－－－－－－－－－－－－
+# def myfac(n):
+#     if n==1:
+#         return 1
+#     return n*myfac(n-1)
+# def facsum(n):
+#     return sum(map(myfac,range(1,n+1)))
+# print(facsum(20))
+－－－－－－－－－－－－－－－－－－－－－－
+２．改写之前的学生信息管理系统要求添加四个功能：
+|5)按学生成绩高-低显示学生信息      |
+|6)按学生成绩低-高显示学生信息　　　 |
+|7)按学生年龄高-低显示学生信息      |
+|8)按学生年龄低-高显示学生信息      |
+－－－－－－－－－－－－－－－－－－－－－－－－－
+def main():
+    print('+------------------------------+')
+    print('|1)添加学生信息-->               |')
+    print('|2)显示学生信息-->               |')
+    print('|3)删除学生信息-->               |')
+    print('|4)修改学生成绩-->               |')
+    print('|5)按学生成绩高-低显示学生信息　 　 |')
+    print('|6)按学生成绩低-高显示学生信息　 　 |')
+    print('|7)按学生年龄高-低显示学生信息　 　 |')
+    print('|8)按学生年龄低-高显示学生信息　 　 |')
+    print('|9)退出-->　　　　               |')
+    print('+------------------------------+')
+    global L
+    L=[]
+    while True:
+        s=input("请输入选项（１～９）：")
+        if s=='1':
+            input_student()
+            continue
+        if s=='2':            
+            print_student(L)
+            continue
+        if s=='3':
+            del_student(L)
+            continue
+        if s=='4':
+            edi_grades(L)
+            continue
+        if s=='5':
+            print_student(print_desc_grade(L))
+            continue
+        if s=='6':
+            print_student(print_asc_grade(L))
+            continue
+        if s=='7':
+            print_student(print_desc_age(L))
+            continue
+        if s=='8':
+            print_student(print_asc_age(L))
+            continue
+        if s=='9':
+            break
+        break
+def input_student():   
+    while True:
+        x=input("请输入姓名:")
+        if x=='':
+            break
+        y=input("请输入年龄:")
+        z=input("请输入成绩:")
+        d={'name':x,'age':y,'score':z}
+        L.append(d)
+    return L 
+def print_student(L):
+    print('+'+'-'*10+'+'+'-'*10+'+'+'-'*10+'+')
+    print('|'+'name'.center(10)+'|'+'age'.center(10)+'|'+'score'.center(10)+'|')
+    print('+'+'-'*10+'+'+'-'*10+'+'+'-'*10+'+')
+    i=0
+    while i<=(len(L)-1):
+        print('|'+L[i]['name'].center(10)+'|'+L[i]['age'].center(10)+'|'+L[i]['score'].center(10)+'|')
+        i+=1
+    print('+'+'-'*10+'+'+'-'*10+'+'+'-'*10+'+')
+def del_student(L):   
+    name=input("请输入要删除学生信息的名字：")
+    for i in L:
+        if i['name']==name:
+            L.remove(i)
+def edi_grades(L):
+    name=input("请输入要修改学生成绩的名字：")
+    for i in L:
+        if i['name']==name:
+            print('该学生目前成绩为：',i['score'])
+            grades=input('请输入修改后的成绩：') 
+            i['score']=grades     
+def print_desc_grade(L):
+    L=sorted(L,key=lambda k:float(k['score']),reverse=True)
+    return L
+
+def print_asc_grade(L):
+    L=sorted(L,key=lambda k:float(k['score']))
+    return L
+
+def print_desc_age(L):
+    L=sorted(L,key=lambda k:k['age'],reverse=True)
+    return L
+def print_asc_age(L):
+    L=sorted(L,key=lambda k:k['age'])
+    return L
+main()
+－－－－－－－－－－－－－－－－－－－－－－－－－
+３．已知有列表
+L=[[3,5,8],10,[[13,14],15,18],20]
+1)写个函数print_list(lst)打印出所有的数字
+即：
+print_list(L)#打印3 5 8 10 13...
+2)写一个函数sum_list(lst)返回这个列表中所有数字的和
+print(sum_list(L)) #106
+注：
+type(x)可以返回一个函数的类型，如：
+type(2) is int #True
+type([1,2,3]) is list#True
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+L=[[3,5,8],10,[[13,14],15,18],20]
+
+# 1) 写一个函数print_list(lst)打印出列表内的所有元素
+def print_list(lst):
+    for x in lst:
+        if type(x) is int:
+            print(x, end=' ')
+        else:
+            print_list(x)  # 递归调用来处理内部的列表
+ 
+print_list(L)  # 3 5 8 10 13 14...
+print()
+ 
+ 
+# 2) 写一个函数sum_list(lst): 返回这个列表中所有元素的和
+def sum_list(lst):
+    s = 0  # 用于累加lst中的所有数的和
+    for x in lst:
+        if type(x) is int:
+            s += x
+        else:
+            s += sum_list(x)
+    return s  # 返回当前的lst的结果def sum_list(lst):
+ 
+print(sum_list(L)) 
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+
+
+
+
+
+
+
+
+
+
+
+
+

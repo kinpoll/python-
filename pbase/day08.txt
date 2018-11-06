@@ -1,0 +1,438 @@
+集合set
+ 1.集合是可变的容器
+ 2.集合内的数据对象都是唯一的（不能重复多次的）
+ 3.集合是无序的存储结构，集合中的数据没有先后关系
+ 4.集合内的元素必须是不可变对象
+ 5.集合是可迭代对象
+ 6.集合是相当于只有键没有值的字典（键则是集合的数据）
+创建空集合：
+ set()
+创建非空集合：
+ s={1,2,3}
+集合的构造函数：
+ set() 创建一个空的集合对象（不能用{}来创建空集合）
+ set(iterable) 用可迭代对象创建一个新的集合对象
+示例：
+ s=set()#空集合
+ s={3,5,7,9}
+ s=set('ABC')#{'A','B','C'}
+ s=set("ABCCBA")#{'A','B','C'}
+ s=set({1:'one',2:'two',3:'three'})#{1,2,3}
+ s=set([None,False,True,0,1,2])#{None,False,True,2} 0/1对应Fasle/True
+ s=set([None,False,True,0,1,2,[1,2,3]])#error 集合内元素必须是不可变对象
+集合的运算：
+ 交集&,并集|,补集-,对称补集^
+ 子集<,超集>
+&生成两个集合的交集
+  s1={1,2,3}
+  s2={2,3,4}
+  s3=s1&s2
+  print(s3)#{2,3}
+|生成两个集合的并集
+  s1={1,2,3}
+  s2={2,3,4}
+  s3=s1|s2
+  print(s3)#{1,2,3,4}
+-生成两个集合的补集
+  s1={1,2,3}
+  s2={2,3,4}
+  s3=s1-s2
+  print(s3)#{1}
+  注：两个属于s1,但不属于s2的所有元素的集合
+^生成两个集合的对称补集
+  s1={1,2,3}
+  s2={2,3,4}
+  s3=s1^s2
+  print(s3)#{1,4}
+<判断一个集合是另一个集合的子集
+>判断一个集合是另一个集合的超集
+  s1={1,2,3}
+  s2={2,3,}
+  s1>s2#True s1为s2的超集
+  s2<s1#True s2是s1的子集
+==，！=判断集合相等或不等
+  s1={1,2,3}
+  s2={3,2,1}
+  s1==s2#True
+  s1!=s2#False
+>=,<= 略
+集合的in/not in 运算符： 
+ in运算符等同于列表的in运算符，用于判断一个元素是否存在于集合中，如果存在则返回True，否则返回Fasle
+ not in与in相反
+if 2 in {1,2,3}:
+    print('2在{1,2,3}内')
+
+集合常用函数
+ len(x)/max(x)/min(x)/sum(x)/any(x)/all(x)
+
+练习：
+经理有：曹操，刘备，孙权
+技术员有：曹操，孙权，张飞，关羽
+用集合求：
+1.既是经理也是技术员的人有谁？
+2.是经理但不是技术员的人有谁？
+3.是技术员但不是经理的人有谁？
+4.张飞是经理么？
+5.身兼一职的人有谁？
+6.经理和技术员共有几个人？
+------
+s1={'曹操','刘备','孙权'}
+s2={'曹操','孙权','张飞','关羽'}
+print('既是经理也是技术员的人有',s1&s2)
+print('是经理但不是技术员的人有',s1-s2)
+print('是技术员但不是经理的人有',s2-s1)
+if '张飞' in s1:
+    print('张飞是经理')
+else:
+    print('张飞不是经理')
+print('身兼一职的人有',s1^s2)
+print('经理和技术员共有%d人' % len(s1|s2))
+-------------------
+python3中集合常用的方法：
+方法 	意义
+S.add(e) 	在集合中添加一个新的元素e；如果元素已经存在，则不添加
+S.remove(e) 	从集合中删除一个元素，如果元素不存在于集合中，则会产生一个KeyError错误
+S.discard(e) 	从集合S中移除一个元素e,在元素e不存在时什么都不做;
+S.clear() 	清空集合内的所有元素
+S.copy() 	将集合进行一次浅拷贝
+S.pop() 	从集合S中删除一个随机元素;如果此集合为空，则引发KeyError异常
+S.update(s2) 	等同于 S \
+	
+S.difference(s2) 	S - s2 补集运算，返回存在于在S中，但不在s2中的所有元素的集合
+S.difference_update(s2) 	等同于 S -= s2
+S.intersection(s2) 	等同于 S & s2
+S.intersection_update(s2) 	等同于S &= s2
+S.isdisjoint(s2) 	如果S与s2交集为空返回True,非空则返回False
+S.issubset(s2) 	如果S与s2交集为非空返回True,空则返回False
+S.issuperset(...) 	如果S为s2的子集返回True,否则返回False
+S.symmetric_difference(s2) 	返回对称补集, 等同于 S ^ s2
+S.symmetric_difference_update(s2) 	等同于 S ^= s2, 用 S 与 s2 的对称补集更新 S
+S.union(s2) 	生成 S 与 s2的全集, 等同于 S
+
+集合推导式：用可迭代对象创建集合的表达式
+语法：
+{表达式 for 变量 in 可迭代对象 [if 真值表达式]}
+注：[]里面的可以省略
+
+推导式的小结：
+三种：
+列表推导式[x for x in L if...]
+字典推导式{x:x**2 for x in L if...}
+集合推导式{x for x in L if...}
+
+固定集合frozenset
+固定集合是不可变的，无序的，含有位移元素的集合
+作用：
+固定集合可以作为字典的键，也可以作为集合的值
+固定集合的构造函数：
+frozenset()创建一个空的固定集合
+固定集合的运算：
+&交集
+|并集
+-补集
+^对称补集
+<,<=,>,>=,==,!=
+in/not in
+(以上运算符用法与set相同)
+
+固定集合的方法：
+相当于集合的全部方法去掉‘’修改集合‘’的方法
+
+====================================
+阶段总结：
+
+数据类型
+不可变类型
+bool,int,float,complex,str,tuple,frozenset,bytes
+可变数据类型
+list,dict,set,bytearray
+
+运算符：
++,-,*,/,//,%,**
+<,<=,>,>=,==,!=
+is/is not
+in/not in
+not ,and,or
+&,^,|
++(正号),-(负号)
+[]索引和切片
+
+表达式：（所有表达式会返回一个值）
+数字
+数字和运算符
+函数调用
+条件表达式 x if x>y else y
+全部的推导式：列表、字典、集合推导式（三种）
+
+语句：
+表达式语句 print('hello')
+赋值语句
+del语句
+if语句
+while语句
+for语句
+break语句
+continue语句
+pass语句
+
+内建（预置）函数：
+用于容器的函数
+len(x)
+max(x)
+min(x)
+sum(x)
+any(x)
+all(x)
+构造函数
+int(x)
+bool(x)
+complex(x)
+float(x)
+str(x)
+list(x)
+tuple(x)
+dict(x)
+set(x)
+frozenset(x)
+数值处理函数
+abs(x)
+round(x)
+pow(x,y,z=None)
+进制转换函数
+bin(x)
+oct(x)
+hex(x)
+编码转换函数
+chr(x)
+ord(x)
+返回可迭代对象的函数
+range(start,end,step)
+reversed(x)
+输入输出函数
+input()
+print(...,sep='',end='\n')
+其他
+id(x)
+type(x)
+==================================================================================================================
+函数function:
+ 函数是可以重复执行的语句块，可以重复的调用
+ 函数是面向过程编程的最小单位
+作用：
+  1.用于封装语句块，提高代码的重要性
+  2.定义用户级别的函数
+
+def语句（复合语句）
+语法：
+  def 函数名（形参列表）:
+      语句块
+说明：
+  1.函数的名字就是语句块的名称
+  2.函数名的命名规则和写变量名的规则相同（必须是标识符）
+  3.函数名是一个变量（不要轻易对其赋值）
+  4.函数有自己的名字空间，在函数外部不可能访问函数内部的变量，在函数内部可以访问函数外部的变量
+  要让函数处理内部的数据最好用参数给函数传入一些数据
+  5.函数如果不需要传入参数，参数列表可以为空
+  6.语句部分不能为空，如果为空需要填充pass语句
+
+函数调用的语法：
+函数名（实际调用传递参数）
+说明：
+函数调用是一个表达式，如果函数内没有return语句，默认返回None对象
+
+eg1：---------------
+def say_hello():                #创建一个变量say_hello绑定以下语句
+    print("hello world!")
+    print("hello tarena!")
+    print("hello everyone!")
+say_hello()                    #调用一次say_hello
+say_hello()                    #调用第二次
+eg2:------------------
+def mymax(a,b):
+    m=a
+    if b>m:
+        m=b
+    print('the maximum is:',m)
+
+mymax(100,200)
+mymax('ABC','123')
+# 练习：--------------------------------
+# 写一个函数myadd，此函数中的参数列表里有两个参数x,y，此函数的功能是打印x+y的和：
+# 如：
+# def myadd(...):
+#     ...#...是需要填充的部分
+# myadd(100,200)
+# myadd('ABC','123')
+----------------------------
+def myadd(x,y):
+    print("The summation result is",x+y)
+myadd(100,200) #300
+myadd('ABC','123') #'ABC123'
+-----------------------------
+def myadd(x,y): 
+    z=x+y
+    print("The summation result is",z)
+myadd(100,200)     #300
+r=myadd('ABC','123')
+print(r)           #None,函数调用是一个表达式，如果函数内没有return语句，默认返回None对象 
+print(x,y,z)       #error:name 'x' is not defined,函数有自己的名字空间，在函数外部不可能访问函数内部的变量
+-------------------------------
+def myadd(): 
+    z=x+y
+    print("The summation result is",z)
+x=10000
+y=20000
+myadd()            #30000,在函数内部可以访问函数外部的变量,要让函数处理内部的数据最好用参数给函数传入一些数据
+----------------------------------------------------------------------------------------------------------
+return()语句
+语法：
+ return [表达式]
+ 注：[]代表其中的内容可省略
+作用：
+ 用于函数中，结束当前函数的执行，返回到调用函数的地方，同时返回一个对象的引用关系
+说明：
+ 1.return语句后跟的表达式可以省略，省略后相当于return None
+ 2.如果函数内没有return语句，则函数执行完最后一条语句后返回None（相当于在最后加了一条return None语句）
+示例：
+def say_hello2():
+    print("hello aaa") #aaa
+    print("hello bbb") #bbb
+    return 1+2 
+    print("hello ccc") 
+r=say_hello2()         #3
+print(r)
+print('end')           #end
+------------------------------------------
+练习：
+1.写一个函数myadd2，实现给出两个数，返回这两个数的和
+如：
+def myadd(x,y)
+    ....
+a=int(input('请输入第一个数'))
+b=int(input('请输入第二个数'))
+print('您输入的这两个数的和是：',myadd2(a,b))
+-----------------------
+def myadd2(x,y):
+    return x+y
+a=int(input('请输入第一个数'))
+b=int(input('请输入第二个数'))
+print('您输入的这两个数的和是：',myadd2(a,b))
+------------------------
+# 2.写一个函数mymax3，返回三个数中最大的一个值
+------------------------
+# 2.写一个函数mymax3，返回三个数中最大的一个值
+def mymax3(x,y,z):
+    #case1
+    # zuida=x 
+    # if zuida<y:
+    #     zuida=y
+    # if zuida<z:
+    #     zuida=z
+    # return zuida
+    #case2
+    zuida=x if x>y else y
+    zuida=zuida if zuida>z else z
+    return zuida
+    # case3
+    # return max(x,y,z)
+a=input('请输入第1个数')
+b=input('请输入第2个数')
+c=input('请输入第3个数')
+print('the maximum is',mymax3(a,b,c))
+--------------------------
+# 3.写一个函数:input_numbers，如下：
+# def input_number():
+#     ....
+# 次函数用来获取用户循环输入的正整数，当用户输入负数时结束输入
+# 将用户输入的数字以列表的形式返回，再用内建函数max,min,sum求出用户输入数的最大值、最小值及和
+---------------------------------
+def input_number():
+    lst=[]
+    while True:
+        x=int(input('enter any integer except <0:'))
+        if x <0:
+            return lst
+        lst.append(x)
+L=input_number()
+print(L)
+print('the maximum is',max(L))
+print('the minimun is',min(L))
+print('the sumation is',sum(L))
+--------------------------------------
+-------------------------------------
+# 练习：
+# 1.写一个函数get_chinese_char_count(s)函数，此函数实现的功能是：给定一个字符串，返回这个字符串中中文字符的个数
+# def get_chinese_char_count(s):
+#     ....
+# s=input("请输入中英文混合的字符串：")
+# print("您输入的中文字符的个数是：",get_chinese_char_count(s))
+#------------------------------------
+def get_chinese_char_count(s):
+    n=0
+    for x in s:
+        if ord('a')<=ord(x)<=ord('z'):
+            continue
+        if ord('A')<=ord(x)<=ord('Z'):
+            continue  
+        n+=1
+    return n
+a=input("请输入中英文混合的字符串：")
+print("您输入的中文字符的个数是：",get_chinese_char_count(a))
+#------------------------------------
+def get_chinese_char_count(s):
+    count=0
+    for ch in s:
+        if ord(ch)>127:
+            count+=1
+    return count
+a=input("请输入中英文混合的字符串：")
+print("您输入的中文字符的个数是：",get_chinese_char_count(a))
+#-------------------------------------
+#-------------------------------------
+# 2.定义两个函数：
+# sum3(a,b,c)用于返回三个数的和
+# pow3(x)用于返回x的三次方
+# 用以上函数计算：
+# ①计算1^3+2^3+3^3
+# ②计算1+2+3的和的立方
+#------------------------------------
+def sum3(a,b,c):
+    return a+b+c
+def pow3(x):
+    return x**3
+print(sum3(pow3(1),pow3(2),pow3(3)))
+print(pow3(sum3(1,2,3)))
+#-------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

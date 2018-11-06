@@ -1,0 +1,388 @@
+集成模块完成多进程多线程socket开发
+
+import socketserver 
+功能：通过模块提供的不同的 类的组合 完成 多进程 或 多线程 的 tcp 或者 udp 的 并发程序
+
+
+
+
+
+
+socketserver模块下类：
+
+StreamRequestHandler  处理tcp套接字请求
+DatagramRequestHandler  处理udp套接字请求
+
+TCPServer  创建tcp server
+UDPServer  创建udp server
+
+ForkingMixIn   创建多进程并发程序
+ForkingTCPServer -->  ForkingMixIn + TCPServer
+ForkingUDPServer -->  ForkingMixIn + UDPServer
+
+ThreadingMixIn  创建多线程并发程序
+ThreadingTCPServer --> ThreadingMixIn + TCPServer
+ThreadingUDPServer --> ThreadingMixIn + UDPServer
+
+
+
+
+
+使用步骤：
+
+1.创建服务器类，通过选择继承模块的TCPServer或UDPServer确定服务器类型，确定多进程还是多线程的并发类型
+2.创建请求处理类。根据服务器类型选择继承流式套接字处理类还是数据报套接字处理类
+3.通过服务器类创建服务器对象，并绑定请求处理类
+4.通过serve_forever()启动服务器，等待连接请求
+
+
+
+
+-----------多进程tcp服务器创建示例----------------------------------------
+from socketserver import *
+#服务器类型
+class Server(ForkingMixIn,TCPServer):
+    pass
+#处理具体请求
+class Handler(StreamRequestHandler):
+    def handle(self):
+        print('connnect from',self.client_address)
+        while True:
+            #self.request 就是accept返回的客户端连接套接字
+            data=self.request.recv(1024)
+            if not data:
+                break
+            print(data.decode())
+            self.request.send(b'Receive')
+if __name__ == '__main__':
+    server_addr = ('0.0.0.0',8888)
+
+    #创建服务器对象
+    server=Server(server_addr,Handler)
+    server.serve_forever() #启动服务器
+-----------------------------------------------------------------------------	
+
+
+
+	
+	
+-----------多线程udp服务器创建示例-------------------------------------------
+from socketserver import *
+#服务器类型
+class Server(ThreadingMixIn,UDPServer):
+    pass
+#处理具体请求
+class Handler(DatagramRequestHandler):
+    def handle(self):
+        while True:
+            data=self.rfile.readline()
+            if not data:
+                break
+            print(data.decode())
+            self.wfile.write(b'Receive')
+if __name__ == '__main__':
+    server_addr = ('0.0.0.0',8888)
+    #创建服务器对象
+    server=Server(server_addr,Handler)
+    server.serve_forever() #启动服务器
+-----------------------------------------------------------------------------
+
+
+
+
+
+
+HTTPServer v2.0
+
+功能：
+1.接收客户端请求
+2.解析客户端请求
+3.组织数据，以http响应格式返回
+4.将数据发送给浏览器
+
+升级：
+1.采用多线程并发，可以满足多个客户端同时发起请求
+2.基本的请求解析，根据具体的请求内容返回相应的网页
+3.除了访问网页，还可以让客户端获取一些数据
+4.将整体功能封装为类
+
+技术点：
+1.使用tcp套接字传输
+2.使用多线程作为并发
+3.类的封装构建
+4.http协议的请求和响应格式
+------------------------------------------------------------------------------
+# coding=utf-8
+'''
+HTTP Server v2.0
+Multithread concurrency
+Do request parsing
+Return simple data
+Encapsulate with classes
+'''
+from socket import *
+from threading import Thread
+import sys
+import time
+# Encapsulate specific http server functionality
+class HTTPServer():
+    def __init__(self, server_addr, static_dir):
+        # Add properties to objects
+        self.server_addr = server_addr
+        self.static_dir = static_dir
+        self.ip = server_addr[0]
+        self.port = server_addr[1]
+        # Create a socket
+        self.create_socket()
+    def create_socket(self):
+        self.sockfd = socket()
+        self.sockfd.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.sockfd.bind(self.server_addr)
+    # Sending web pages to clients
+    def get_html(self, connfd, getRequest):
+        if getRequest == '/':
+            filename = self.static_dir+'/index.html'
+        else:
+            filename = self.static_dir+getRequest
+        print('文件路径:', filename)
+        try:
+            f = open(filename)
+        except Exception:
+            # Operations not found on the web page
+            responseHeaders = 'HTTP/1.1 404 Not found\r\n'
+            responseHeaders += '\r\n'
+            responseBody = 'Sorry,not found the page'
+        else:
+            # If a page is found, the page is returned
+            responseHeaders = 'HTTP/1.1 200 OK\r\n'
+            responseHeaders += '\r\n'
+            responseBody = f.read()
+        finally:
+            response = responseHeaders+responseBody
+            connfd.send(response.encode())
+    def get_data(self, connfd, getRequest):
+        urls = ['/time', '/tedu', '/python']
+        if getRequest in urls:
+            responseHeaders = 'HTTP/1.1 200 OK\r\n'
+            responseHeaders += '\r\n'
+            if getRequest == '/time':
+                responseBody = time.ctime()
+            elif getRequest == '/tedu':
+                responseBody = 'O(∩_∩)O哈哈~'
+            elif getRequest == '/python':
+                responseBody = '(*^__^*) 嘻嘻……'
+        else:
+            responseHeaders = 'HTTP/1.1 404 Not found\r\n'
+            responseHeaders += '\r\n'
+            responseBody = '找不到你，想要的数据'
+        response = responseHeaders+responseBody
+        connfd.send(response.encode())
+    # Function that specifically handles client requests
+    def handle(self, connfd):
+        # Accept client's requests
+        request = connfd.recv(4096).decode()
+        # Line cutting
+        requestHeaders = request.splitlines()
+        print(connfd.getpeername(), ':', requestHeaders[0])
+        # Get specific request content
+        getRequest = requestHeaders[0].split(' ')[1]
+        if getRequest == '/' or getRequest[-5:] == '.html':
+            self.get_html(connfd, getRequest)
+        else:
+            self.get_data(connfd, getRequest)
+        connfd.close()
+    # Function to start the server
+    def serve_forever(self):
+        self.sockfd.listen(5)
+        print('Listen to port %d' % self.port)
+        while True:
+            try:
+                connfd, addr = self.sockfd.accept()
+            except KeyboardInterrupt:
+                self.sockfd.close()
+                sys.exit('Server exit!')
+            except Exception as e:
+                print('Error:', e)
+                continue
+            # Create threads to process client requests
+            clientThread = Thread(target=self.handle, args=(connfd,))
+            clientThread.setDaemon(True)
+            clientThread.start()
+if __name__ == '__main__':
+    # Set the server ip when the user uses it
+    server_addr = ('0.0.0.0', 8888)
+    # Require user to provide page location
+    static_dir = '/home/tarena/static'
+    # Create server objects
+    httpd = HTTPServer(server_addr, static_dir)
+    # Start server
+    httpd.serve_forever()
+
+----------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+协程基础
+
+定义：纤程，微线程。是为非抢占式多任务产生子程序的计算机程序组件协程允许不同入口点在不同位置暂停或者开始，简单来说，协程就是可以暂停执行的函数
+* yield 实现生成器的跳转是协程现象的基本体现
+协程原理： 记录一个函数的上下文栈，协程调度切换时，将记录的上下文栈保存起来，在切换回来时进行调取，回复原有的执行内容，因此可以从上一次的位置继续执行
+协程优点：
+  1.协程是一个单线程程序，占用计算机资源很少
+  2.协程无需进行切换开销
+  3.协程无需同步互斥
+协程缺点：
+  无法利用计算机多核资源
+  
+  
+  
+  
+  
+  
+ 
+>>协程利用模块①： 
+
+
+import greenlet
+
+g=greenlet.greenlet(fun)
+功能：生成协程对象
+参数：fun
+
+g.switch()
+功能：选择要执行的协程事件
+------------------------------------------------------------------
+from greenlet import greenlet
+
+def test1():
+    print(12)
+    gr2.switch()#执行协程test2
+    print(34)
+def test2():
+    print(56)
+    gr1.switch()
+    print(78)
+#将两个函数变为协程
+gr1=greenlet(test1)
+gr2=greenlet(test2)
+gr1.switch()#执行协程test1
+# 12
+# 56
+# 34
+--------------------------------------------------------------------
+
+
+
+
+
+>>协程利用模块②：
+import gevent
+
+
+1.将协程事件封装成函数
+2.生成协程对象：
+gevent.spawn(func,argv)
+功能：生成协程对象
+参数：func 协程函数
+      argv 给协程函数传参(不定参数)
+返回值：返回协程对象
+3.协程回收：
+gevent.joinall(list,[timeout])
+功能：阻塞等待回收协程
+参数：list 要回收的协程列表
+      timeout 超时时间
+gevent.sleep():gevent阻塞，可以使协程跳转
+
+*无论有多少协程在程序中，同一时刻只能有一个任务执行，且协程不会阻碍主进程的执行
+--------------------------------------------------------------------------------------
+import gevent
+def foo(a,b):
+    print('Running foo',a,b)
+    gevent.sleep(2)
+    print('Runing foo again')
+
+def bar():
+    print('Runing bar')
+    gevent.sleep(3)
+    print('Runing bar again')
+f=gevent.spawn(foo,1,2)
+g=gevent.spawn(bar)
+gevent.joinall([f,g])
+------------------------------------------------------------------------------------
+
+
+
+
+
+from gevent import monkey
+功能: 修改套接字的IO阻塞行为
+monkey.patch_all()
+*修改了原有socket代码行为，必须在socket导入前执行
+--------------------------------------------------------------------------------------
+import gevent
+from gevent import monkey
+monkey.patch_all()#执行脚本插件修改阻塞行为
+from socket import *
+
+def server():
+    s=socket()
+    s.bind(('0.0.0.0',8888))
+    s.listen(5)
+    while True:
+        c,addr=s.accept()
+        print('connect from',addr)
+        # handle(c) #循环方案
+        gevent.spawn(handle,c)#携程方案
+def handle(c):
+    while True:
+        data=c.recv(1024)
+        if not data:
+            break
+        print(data.decode())
+        c.send('收到了\n'.encode())
+    c.close()
+server()
+------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

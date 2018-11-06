@@ -1,0 +1,312 @@
+一、聚合管道 
+
+聚合管道指的是将上一个聚合的操作结果给下一个聚合继续操作
+
+db.collection.aggregate([{聚合},{},{}...])
+
+e.g.  match --> project --> sort
+db.class0.aggregate([{$match:{gender:'m'}},{$project:{_id:0}},{$sort:{age:1}}])
+
+e.g.  group ---> match  找到重名学生
+db.class0.aggregate([{$group:{_id:'$name',num:{$sum:1}}},{$match:{num:{$gt:1}}}])
+
+
+
+
+
+
+
+
+二、固定集合
+
+定义：mongodb中可以创建大小固定的集合，称之为固定集合
+
+特点:能够淘汰早期数据
+    插入和顺序查找速度更快
+    可以控制集合的空间大小
+使用:临时缓冲
+    日志处理
+
+创建固定集合：
+    db.createColleciton(collection,{capped:true,size:10000,max:1000})
+参数：
+    capped:true  表示创建固定集合
+    size: 表示指定集合的大小(字节)
+    max: 指定集合存放文档上限
+
+e.g.创建固定集合，size为1000  最多存3条文档
+    db.createCollection('log',{capped:true,size:1000,max:3})
+
+
+
+
+
+
+
+
+
+
+
+三、文件存储
+
+1.存储文件路径
+  e.g. 
+  db.log.insert({filename:'test.mp4',size:247.8,path:"/home/tarena/mongodb/test.mp4"})
+  优点：节省数据库空间，操作简单快捷
+  缺点：当数据库或者文件位置发生变化时需要修改数据库内容
+
+2.存储文件本身
+  将文件以二进制的形式存储到数据库中
+  优点 : 数据库在文件就在，不会受到迁移等影响
+  缺点 : 占用数据库空间大，存取效率低
+
+3.GridFS存储大文件(终端下操作)
+  (1).大文件 : 在mongodb中认为 >16M 的文件为大文件
+  (2).GridFS 方法 ：在mongodb中以两个集合配合的方法存储文件
+      fs.files : 存储文件相关信息（文件名，文件类型）
+      fs.chunks :分块存储文件实际内容
+  (3).GridFS 方法存储文件格式:
+    *mongofiles -d dbname  put  file
+      dbname : 要将文件存入的数据库，如果不存在自动创建
+      file : 要保存的文件
+    *e.g. 将当前文件下的test.mp4存入grid数据库
+      mongofiles -d grid  put test.mp4
+    *fs.files结构
+      { "_id" : ObjectId("5ba452a869d72e12d5cd4e46"), "chunkSize" : 261120, "uploadDate" : ISODate("2018-09-21T02:09:04.193Z"), "length" : 247759369, "md5" : "a94853f4f64b3e87bf98aea770855615", "filename" : "test.mp4" }
+    *fs.chunks结构
+      { "_id" : ObjectId("5ba452a869d72e12d5cd4e59"), "files_id" : ObjectId("5ba452a869d72e12d5cd4e46"), "n" : 18, "data" : BinData(0,"G2.....qRv") }
+
+  (4).提取文件:
+    *mongofiles -d dbname  get  file
+    *file目标文件为fs.files集合文档中filename
+    *e.g. 从grid数据库中获取文件
+     mongofiles -d grid get test.mp4
+
+  (5).优缺点
+     优点 : 操作方便，提供较好的存储命令，使用数据库存储文件方便移植
+     缺点 : 读写效率低
+
+
+
+
+
+
+
+
+四、mongo shell对javascript支持：在mongo shell下可以直接运行基本的js代码
+
+游标 cursor：（便于操作，防止阻塞）
+           通过获取操作数据库的返回结果，得到返回结果对象。
+           通过游标可以进一步获取操作结果数据。
+
+    1.将返回结果赋给一个js变量，作为查找结果游标
+      var cursor = db.class0.find()
+    2.查看是否有下一个结果
+      cursor.hasNext()
+    3.获取下一个结果
+      cursor.next()
+
+
+
+
+
+
+
+
+
+
+五、python与MongoDB交互：
+
+python  --> pymongo 模块
+安装 :  sudo pip3 install pymongo
+from pymongo import MongoClient
+
+1.操作步骤：
+    (1). 创建mongodb的数据库连接对象
+         conn = pymongo.MongoClient('localhost',27017)
+    (2). 生成数据库对象 (__setitem__ __getitem__)
+         db = conn.stu
+         db = conn['stu']
+    (3). 生成操作的集合对象
+         myset = db.class0
+         myset = db['class0']
+    (4). 通过集合对象调用函数进行数据库操作
+    (5). 关禁数据库连接
+         conn.close()
+
+2.通过集合对象调用函数进行数据库操作
+    (1).插入操作
+        insert()
+        insert_many()
+        insert_one()
+        save()
+    (2).查找操作
+        find()
+        功能 : 查找数据库内容
+        参数 : 同mongo shell find()
+        返回值: 返回一个游标变量cursor=myset.find(),直接打印cursor得到一个对象，可以通过迭代取值
+        find_one()
+        功能:查询第一条符合条件的文档
+        参数: 同find（）
+        返回值: 返回一个字典
+      * 在pymongo中所有操作符的用法同mongo shell相同，只是操作时加引号，以字符串的方式写入python代码
+      * python中 True ==》 true；False  ==》 false；None ===》 null
+
+    (3).cursor对象的属性函数
+        next()
+        limit()
+        skip()
+        count()
+        sort()
+        pymongo -> sort([('age',1),('name',-1)])
+        mongo shell -> sort({age:1,name:-1})
+      * 使用for 或者next 使游标位置不再指向初始位置的时候调用limit  skip  sort就会报错
+    
+    (4).修改操作
+        update(query,update,upsert=False,multi=False)
+        update_many()
+        update_one()
+
+    (5).删除操作
+        remove(query,multi = True)
+        delete_one()
+        delete_many()
+        multi默认是true表示删除所有query过滤文档
+        设置为False表示只删除第一个
+
+    (6).索引操作
+        create_index([('name',1)],unique=True)返回索引名称，和下行表达等同
+        ensure_index('name'，unique=True)返回索引名称
+        list_indexes()可以通过for循环遍历
+        drop_index('name_1')通过索引名称删除
+        drop_indexes()
+
+    (7).聚合操作
+        aggregate([])
+        参数:和mongo shell一样
+        返回值:返回和find()函数相同的游标对象,通过for遍历取值
+
+
+
+
+
+
+
+
+六、pymongo 实现gridfs存储
+1.GridFS的文件提取：
+  import  gridfs   #导入模块
+  (1).提取步骤：
+    ①连接数据库，生成数据库对象
+      from pymongo import MongoClient
+      conn=MongoClient('localhost',27017)
+      db=conn.stu
+    ②生成gridfs对象
+      fs=GridFS(db)
+    ③通过fs获取储存的文件集合
+      files=fs.find()
+    ④挑选想获取的文件进行读取
+  
+  ------eg：从数据库中提取文件到本地---------------------------------
+  from pymongo import MongoClient
+  import gridfs
+  #获取数据库对象
+  conn=MongoClient('localhost',27017)
+  db=conn.grid
+  #获取文件集合对象
+  fs=gridfs.GridFS(db)
+  #获取文件集
+  files=fs.find()
+  
+  for file in files:
+      #filename属性获取文件名称
+      print(file.filename)
+      if file.filename=='./img.jpg':
+          with open(file.filename,'wb') as f:
+              #从数据库中读取
+              data=f.read()
+              #写入本地
+              f.write(data)
+  conn.close()
+  ------------------------------------------------------------
+  (2).上传步骤
+    ①连接数据库，生成数据库对象
+      from pymongo import MongoClient
+      conn=MongoClient('localhost',27017)
+      db=conn.stu
+    ②生成gridfs对象
+      fs=GridFS(db)
+    ③通过fs.put()函数将读取出来的文件内容存入到数据库
+      fs.put(data,filename)
+      参数：data 要存入的二进制内容
+           filename 文件存入的名称
+  
+  
+  --------eg：将本地文件上传到数据库中-------------------------------
+  from pymongo import MongoClient
+  import gridfs
+  #获取数据库对象
+  conn=MongoClient('localhost',27017)
+  db=conn.grid
+  #获取文件集合对象
+  fs=gridfs.GridFS(db)
+  with open('img_5.jpg','rb') as f:
+      fs.put(f.read(),filename='mm.jpg')
+  conn.close()
+  ------------------------------------------------------------
+2.存取小文件（size<=16MB） 
+import bson.binary
+步骤：
+  ①连接数据库生成对象，生成数据库对象和集合对象
+  ②选择要存储的文件使用rb方式读出
+  ③将读取的内容转换为MongoDB的二进制存储格式
+    content=bson.binary.Binary(data)
+    功能：将bytes字串转换为MongoDB二进制存储
+    参数：要转换的bytes字串
+    返回值：转换后的待存储数据
+  ④将内容写入文档，插入数据库
+
+-----eg：向数据库中存储文件----------------------------------------------
+from pymongo import MongoClient
+import bson.binary
+
+conn=MongoClient('localhost',27017)
+db=conn.image
+myset=db.flower
+
+with open('img_5.jpg','rb') as f:
+    content=bson.binary.Binary(f.read())
+    myset.insert({'data':content,'filename':'flower.jpg'})
+conn.close()
+------------------------------------------------------
+-----eg：从数据库中提取文件存储到本地----------------------------------------------
+from pymongo import MongoClient
+import bson.binary
+conn=MongoClient('localhost',27017)
+db=conn.image
+myset=db.flower
+img=myset.find_one({'filename':'flower.jpg'})
+with open('img_5.jpg','wb') as f:
+    f.write(img['data'])
+conn.close()
+------------------------------------------------------
+
+
+
+
+
+
+
+聚合练习
+grade数据库 class集合
+1. 为所有人添加score域 值为
+ {'chinese':88,'math':77,'english':78}
+
+2. 按照性别分组统计每组人数
+
+3. 统计每名男生的语文成绩
+
+4. 将女生按照英语成绩降序排列
+
+作业 : 复习下ftp  和 聊天室项目
+        mongodb  总结

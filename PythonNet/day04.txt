@@ -1,0 +1,356 @@
+一、承上IO/IO类型/IO的多路复用:
+import select
+
+1.select
+
+2.poll方法实现IO多路复用：
+  1.p=select.poll()
+    功能：创建poll对象
+    返回值：poll对象
+    
+  2.p.register(fd,event)
+    功能：注册要关注的IO事件
+    参数：fd-->要关注的IO对象
+    　　　event-->选择要关注的事件
+    　　　        常用事件类型：POLLIN 读IO事件
+    　　　　　　　　　　　　　　　POLLOUT 写IO事件
+    　　　　　　　　　　　　　　　POLLERR 出错IO
+    　　　　　　　　　　　　　　　POLLHUP 连接断开事件
+                             eg:p.register(sockfd,POLLIN | POLLERR)
+  3.p.unregister(fd)
+    功能：取消对IO的关注
+    参数：IO对象或者是文件描述符
+  4.events=p.poll()
+    功能：阻塞等待监控的IO事件的发生
+    返回值：events是一个列表，格式如下：
+           [(fileno,event),(),()...]
+           其中每个元祖为一个就绪的IO事件 
+           元祖中有该IO的fileno和就绪的事件类型
+    ＊需要字典配合通过fileno查找对应的IO事件对象
+    ｛fileno:in_object｝ eg:{sockfd.fileno():sockfd}
+  5.poll_server步骤：
+    1.创建套接字
+    2.将套接字设置为关注
+    3.创建查找字典，并维护
+    4.循环监控发生
+    5.处理发生的IO事件
+---------------------------------------示例:poll_server.py---------------------------------------------------------
+from socket import *
+from select import *
+sockfd = socket()
+sockfd.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+sockfd.bind(('0.0.0.0', 8888))
+sockfd.listen(5)
+
+
+# 创建poll对象
+p = poll()
+# 建立查找字典
+fdmap = {sockfd.fileno(): sockfd}
+# 注册要关注的IO
+p.register(sockfd, POLLIN | POLLERR)
+
+while True:
+    # 监控IO
+    print('阻塞等待IO')
+    events = p.poll()
+    for fd, event in events:
+        if fd == sockfd.fileno():
+            connfd, addr = fdmap[fd].accept()
+            print('Cinnect from', addr)
+            # 添加新的关注事件
+            p.register(connfd, POLLIN | POLLHUP)
+            fdmap[connfd.fileno()] = connfd
+        elif event & POLLIN:
+            data = fdmap[fd].recv(1024)
+            if not data:
+                p.unregister(fd)
+                fdmap[fd].close()
+                del fdmap[fd]
+            print('Receive:', data.decode())
+            fdmap[fd].send('收到了'.encode())
+----------------------------------------------------------------------------------------------------------
+3.epoll方法实现IO多路复用：
+  使用方法：基本与poll方法相同,小部分需要修改
+    *生成对象修改为epoll()方法
+    *事件类型改为EPOLL类型
+  epoll的特点：
+    1.epoll效率比select和poll要高
+    2.epoll的IO监控数量比select要多
+    3.epoll的触发方式更多（边缘触发）
+---------------------------------------示例:epoll_server.py---------------------------------------------------------
+
+from socket import *
+from select import *
+sockfd = socket()
+sockfd.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+sockfd.bind(('0.0.0.0', 8888))
+sockfd.listen(5)
+
+
+# 创建poll对象
+p = epoll()
+# 建立查找字典
+fdmap = {sockfd.fileno(): sockfd}
+# 注册要关注的IO
+p.register(sockfd, EPOLLIN | EPOLLERR)
+
+while True:
+    # 监控IO
+    print('阻塞等待IO')
+    events = p.poll()
+    for fd, event in events:
+        if fd == sockfd.fileno():
+            connfd, addr = fdmap[fd].accept()
+            print('Connect from', addr)
+            # 添加新的关注事件
+            p.register(connfd, EPOLLIN | EPOLLHUP)
+            fdmap[connfd.fileno()] = connfd
+        elif event & POLLIN:
+            data = fdmap[fd].recv(1024)
+            if not data:
+                p.unregister(fd)
+                fdmap[fd].close()
+                del fdmap[fd]
+            print('Receive:', data.decode())
+            fdmap[fd].send('收到了'.encode())
+----------------------------------------------------------------------------------------------------------
+二、发送更丰富的数据结构
+struct模块　结构化数据
+  原理：将数据转换为bytes格式，并且可以将bytes格式数据转换回来
+from struct import Struct,pack,unpack
+1.st=Struct(fmt)
+  功能：生成struct对象
+  参数：fmt 定制的数据结构组成
+  返回：struct对象
+  Python类型　fmt
+  int        i
+  float      f
+  bytes      ns(n代表有几个字符)
+  
+2.st.pack(v1,v2,v3...)或struct.pack('i5sf',data)
+  功能：将数据按照指定格式打包转换为bytes
+  参数：要发送的数据
+  返回值：打包后的bytes字串
+  
+3.st.unpack(bytes_data)
+  功能：将bytes子串解析为指定格式数据
+  参数：要解析的bytes字串
+  返回值：元祖，为解析后的内容
+  eg:
+     要发的数据：1b,'zhang',1.75
+     组织的类型格式：struct.Struct('i5sf')
+     st.pack(1,b'zhang',1.75)   或者不创建对象　struct.pack('i5sf',1,b'zhang',1.75)
+---------------------------示例：struct_recv.py----------------------------------------
+from socket import *
+import struct
+s=socket()
+s.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+s.bind(('0.0.0.0',8888))
+s.listen(5)
+#确定数据结构
+st=struct.Struct('i5sf')
+c,addr=s.accept()
+data=c.recv(1024)
+#解析数据
+data=st.unpack(data)
+print(data)
+c.close()
+s.close()
+-----------------------------------------------------------------------------------
+
+---------------------------示例：struct_send.py----------------------------------------
+from socket import *
+import struct
+s=socket()
+s.connect(('0.0.0.0',8888))
+st=struct.Struct('i5sf')
+#将数据打包发送
+data=st.pack(1,b'zhang',1.75)
+s.send(data)
+s.close()
+-----------------------------------------------------------------------------------
+
+  
+三、本地套接字
+功能：本地两程序之间发送数据信息(本地两进程间通信)
+创建流程：
+1.创建本地套接字
+　sockfd=socket(AF_UNIX,SOCK_STREAM)
+2.绑定本地套接字文件
+　sockfd.bind(path)
+3.监听
+　listen(3)
+4.消息收发
+　send/recv
+---------------------------------示例：unix_recv.py----------------------------------
+from socket import *
+#确定套接字文件
+sock_file='./sock'
+#创建本地套接字
+sockfd=socket(AF_UNIX,SOCK_STREAM)
+#绑定套接字文件
+sockfd.bind(sock_file)
+#监听
+sockfd.listen(3)
+while True:
+    c,add=sockfd.accept()
+    while True:
+        data=c.recv(1024)
+        if not data:
+            break 
+        print(data.decode())
+    c.close()
+sockfd.close()
+------------------------------------------------------------------------------
+---------------------------------示例：unix_send.py----------------------------------
+from socket import *
+
+#确保两端使用同一个套接字文件
+sock_file='./sock'
+sockfd=socket(AF_UNIX,SOCK_STREAM)
+sockfd.connect(sock_file)#连接套接字文件
+while True:
+    msg=input('>>')
+    if not msg:
+        break
+    sockfd.send(msg.encode())
+sockfd.close()
+------------------------------------------------------------------------------
+
+四、多任务编程概念:
+意义：
+  充分利用计算机资源提高程序的运行效率
+
+定义：
+  通过一定的编程手段，在一个程序运行中可以同时利用计算机执行多个任务，以此提高程序的运行效率
+
+(应用层)实现方案：　
+  ①多进程　
+  ②多线程
+
+并发：
+  同时处理多个任务，内核在任务间不断的切换，达到好像多个任务均被同等执行的效果，实际每个时刻只有一个任务占用内核
+
+并行：
+  多个任务利用计算机多核资源在同时执行，此时多个任务间为并行关系
+
+进程(Process):
+  定义：程序在计算机中一次运行过程
+
+程序和进程对比：
+　程序：是一个可执行的文件，是静态的占有磁盘空间
+　进程：进程是一个动态的过程，占有计算机资源，有一定的生命周期
+
+进程的诞生：
+　1.用户空间通过调用程序接口或者命令请求发起进程创建请求
+　2.操作系统接受用户请求，开始创建进程
+　3.操作系统分配计算机资源，确定进程状态，开辟空间等
+　4.操作系统将创建的进程提供给用户使用
+
+cpu时间片：如果一个进程占有cpu内核，则称这个进程在cpu时间片上
+
+pcb(进程控制块)：在内存中开辟的一块空间，存放进程的基本信息
+
+进程ID(PID)：系统为进程分配的ID号，每个进程不重复
+linux命令(查看进程ID)： ps -aux 
+
+父子进程：系统中每一个进程都有唯一的父进程，可以有多个或0个子进程，这样形成父子进程关系
+linux命令查看进程数：　　pstree
+
+进程状态：
+三态：
+　就绪态：进程具备执行条件
+　运行态：进程占有cpu时间片正在运行
+　等待态：进程暂时阻塞不具备执行条件
+五态（增加新建态和终止态）
+　新建态：创建一个新的进程，获取资源的过程
+　终止态：进程结束，释放资源的过程
+查看命令：ps -aux 
+-->(状态)STAT列：
+　（等待原因有很多种，所以表示符不一样）
+  S  等待态  （可中断等待）
+  D  等待态  （不可中断等待）
+  T  等待态  （暂停状态）
+  R  运行态  （包含就绪态）
+  Z  僵尸进程
+
+进程优先级：
+作用：决定进程的优先权限和占有资源的有限程度
+动态(linux命令)查看进程的优先级： top
+
+linux优先级范围：　-20~19 数字越小，优先级越高
+
+指定优先级运行程序：
+nice -9 python3 while.py     表示以9的优先级运行
+nice --9 python3 while.py    表示以-9的优先级运行
+
+进程的管理机制：
+　< 有较高的优先级
+  N 较低的优先级
+  l 有子进程的
+  s 会话组组长
+  + 前台进程
+
+
+进程特征 
+1. 进程可以使用计算机的多核资源
+2. 进程是计算机分配系统资源的最小单位
+3. 进程之间运行互不影响，各自独立运行
+4.每个进程的空间独立，各占有自己的空间资源
+
+要求 ：  
+   1. 什么是进程，进程和程序的区别
+   2. 了解进程特征
+   3. 清楚进程每种状态，以及状态之间的转换关系
+
+五、多进程编程
+
+import  os  
+
+pid = os.fork()
+功能 ： 创建新的进程
+参数 ： 无
+返回值：失败：　返回一个负数
+     　成功 ： 在原有进程中返回新的进程的PID号
+	    　    在新的进程中返回0
+----------------------示例:fock.py-----------------------------------------------
+import os
+pid=os.fork()
+if pid < 0:
+    print('create process failed')
+elif pid==0:
+    print('The new process')
+else:
+    print('The old process')
+print('fork test over')
+# The old process
+# fork test over
+# The new process
+# fork test over
+--------------------------------------------------------------------------
+* 子进程会复制父进程全部代码段，包括fork之前产生的内存空间
+* 子进程从fork的下一句开始执行，与父进程互不干扰
+* 父子进程的执行顺序是不一定的，父子进程公用一个终端显示
+* 父子进程通常会根据fork返回值得差异选择执行不同的代码。所以if结构几乎是fork的固定搭配
+* 父子进程空间独立，操作的都是本空间的内容，互不影响
+* 子进程也有自己的特性，比如PID号，PCB，命令集等
+
+
+作业 ： 
+
+写一个聊天室
+
+功能 ： 类似qq群聊
+1. 进入聊天室需要输入姓名，姓名不能重复
+2. 有人进入聊天室会向其他人发送通知
+   xxx 进入了聊天室
+3. 一个人发消息，其他人会收到消息
+   xxx 说 ： xxxxxxxx
+4. 某人退出聊天室，其他人也会收到通知
+   xxx 退出了聊天室
+5.管理员喊话群里都收到
+
+服务端   客户端
+* 使用什么技术 
+* 知识点回顾复习

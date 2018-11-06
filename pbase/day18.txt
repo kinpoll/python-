@@ -1,0 +1,502 @@
+day18笔记
+类变量
+类方法
+静态方法
+继承派生-->单继承
+覆盖
+子类的显式调用函数super
+-----------------------------------------------
+类的创建语句class语句
+语法：
+class 类名（继承列表）:
+    '''类的文档字符串'''
+    实例方法
+    类变量
+    类方法（@classmethod）
+    静态方法(@staticmethod)
+-------------------------------------------------
+类变量
+类变量是类的属性，此属性属于类，不属于类的实例,但可以通过对象访问类属性变量
+
+作用：
+　通常用来存储该类创建的对象的共有属性
+
+说明：
+类变量可以通过该类直接访问
+类变量可以通过类的实例直接访问（取值）
+类变量可以通过此类的对象的__class__属性间接访问
+
+示例：
+---------------------------------------------
+#class_variable.py
+#此示例示意类变量的定义用法和方法
+class Car:
+    #类变量用于保存汽车对象的个数
+    total_count=0
+print(Car.total_count)#读取类变量的值
+Car.total_count+=100#修改类变量
+print(Car.total_count)#100
+c1=Car()
+print(c1.total_count)#100:借助对象访问变量
+c1.total_count=999
+print(c1.total_count)#999
+print(Car.total_count)#100
+----------------------------------------
+#class_variable2.py
+#此示例示意类变量的定义用法和方法
+class Car:
+    #类变量用于保存汽车对象的个数
+    total_count=0
+    def __init__(self,info):
+        self.info=info
+        print('汽车',info,'被创建')
+        self.__class__.total_count+=1
+    def __del__(self):
+        print('汽车',self.info,'被销毁')
+        Car.total_count-=1
+c1=Car('BYD E6')
+c2=Car('吉利 E7')
+print("当前有%d个汽车" %　Car.total_count)
+c2.__del__()
+print('当前有%d个汽车对象'　%　Car.total_count)
+-----------------------------------------------------------
+类的文档字符串：
+类内第一个没有赋值给变量的字符串为文档字符串
+类的文档字符串可以用类的__doc__属性访问
+-----------------------------------------------------------
+类的__slots__列表
+　作用：
+　　１．限定一个类创建的实例只能有固定的实例变量（实例属性）
+　　２．不允许对象添加列表以外的实例属性
+　　３．防止用户因错写属性名称而发生错误
+　说明：
+　　__slots__属性是一个列表，列表的值是字符串
+　　含有__slots__属性的类所创建的对象没有__dict__属性，即此实例不用字典来储存实例属性
+　示例：
+------------------------------------------------
+#slots.py
+#此示例示意类内的__slots__列表的用法
+class Human:
+    #限制Human类的对象只能有'name'和'age'属性，不能有其他属性
+    __slots__=['name','age']
+    def __init__(self,n,a):
+        self.name,self.age=n,a 
+    def show_info(self):
+        print(self.name,self.age)
+s1=Human('Tarena',15)
+s1.show_info()#Tarena 15
+s1.Age=16     #写错变量名 AttributeError: 'Human' object has no attribute 'Age'
+s1.show_info()#Tarena 15
+------------------------------------------------------------------------------
+类方法@classmethod）
+ 类方法是用于描述类的行为的方法，类方法属于类，不属于该类创建的实例对象
+
+ 说明：
+ 　１．类方法需要使用@classmethod装饰器定义
+ 　２．类方法至少有一个形参，第一个形参用于绑定类，约定为'cls'
+ 　３．类和该类的实例都可以调用类方法
+ 　４．类方法不能访问此类创建的对象的实例属性
+ 示例：
+ --------------------------------------------------------------------------------------------------------------
+#class_method.py
+#此示例示意类方法的定义及调用
+class A:
+    v=0
+    @classmethod
+    def get_v(cls):
+        return cls.v#获取类变量v的值
+    @classmethod
+    def set_v(cls,value):
+        cls.v=value#设置　类变量v=value
+A.set_v(10)
+print(A.v)                       # 10直接访问类变量
+# A.get_v()#想调用A类的方法来取值
+print(A.set_v(100))              #None
+print('value=',A.get_v())        # 100 
+#----------------------------------------------------
+d=dict.fromkeys([1,1,2,2,3,3,9,9,5,5],'d')
+print(d)#{1: 'd', 2: 'd', 3: 'd', 5: 'd', 9: 'd'}
+---------------------------------------------------------------------------以上:类调用类方法---------------------
+---------------------------------------------------------------------------以下:类的实例调用类方法----------------
+
+#class_method2.py
+#此示例示意类方法的定义及调用
+＃class A:
+＃    v=0
+＃    @classmethod
+＃    def get_v(cls):
+＃        return cls.v#获取类变量v的值
+＃    @classmethod
+＃    def set_v(cls,value):
+＃        cls.v=value#设置　类变量v=value
+＃a=A()
+＃a.set_v(10)
+＃print(a.__class__.v)             #10直接访问类变量
+＃# a.get_v()#想调用a.__class__类的方法来取值
+＃print(a.set_v(100))              #None
+＃print('value=',a.get_v())        # 100 
+＃#----------------------------------------------------
+＃d=dict.fromkeys([1,1,2,2,3,3,9,9,5,5],'d')
+＃print(d)#{1: 'd', 2: 'd', 3: 'd', 5: 'd', 9: 'd'}
+-------------------------------------------------------------------------------------------------
+
+静态方法@staticmethod
+ 静态方法是定义在类内部的函数，此函数的作用域是类的内部
+
+说明：
+　１．静态方法需要用@staticmethod装饰器定义
+　２．静态方法与普通函数定义相同，不需要传入'self'和'cls'参数
+　３．静态方法只能凭借该类或类的实例调用
+　４．静态方法不能访问类变量和实例变量
+示例：
+－－－－－－－－－－－－－－－－－－－－－－－－－
+#satic_method.py
+#此示例示意静态方法的定义及使用
+class A:
+    @staticmethod
+    def myadd(a,b):
+        '''这是静态方法'''
+        return a+b
+#用类来调用该类的静态方法
+print(A.myadd(100,200))#300
+a=A()
+#用类的实例来调用该实例所属的类的静态方法
+print(a.myadd(300,200))#500
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+练习：
+用类描述一个学生的信息（可以修改之前写的student类）
+class Student:
+    ....
+学生信息有：
+姓名，年龄，成绩
+将这些学生对象存于列表中，可以任意添加和删除学生信息
+①打印学生的个数
+②打印出所有学生的平均成绩
+③打印除所有学生的平均年龄
+（建议用列表的长度计算学生的个数）
+------------------------------------------------------------自己写的--------------------------------
+＃class Student:
+＃    global L
+＃    L=[]
+＃    def __init__(self,name,age,score):
+＃        self.name,self.age,self.score=name,age,score  
+＃    @staticmethod
+＃    def info_list():
+＃        while True:
+＃            x=input('姓名')
+＃            if not x:
+＃                break
+＃            y=input('年龄')
+＃            z=input('成绩')
+＃            s=Student(x,y,z)
+＃            L.append(s.__dict__)
+＃        return L
+＃    @classmethod
+＃    def print_count(cls,L):
+＃        print('共录入学生%d个' % len(L))
+＃    @staticmethod
+＃    def get_age_average(L):
+＃        lst=[]
+＃        for x in L:
+＃            lst.append(int(x['age']))
+＃        print('所有学生的平均年龄为:',sum(lst)/len(lst))
+＃    @staticmethod    
+＃    def get_score_average(L):
+＃        lst=[]
+＃        for x in L:
+＃            lst.append(int(x['score']))
+＃        print('所有学生的平均成绩为:',sum(lst)/len(lst))
+＃    @staticmethod
+＃    def del_info(L):
+＃        n=input('要删除学生信息的名字')
+＃        for x in L:
+＃            if x['name']==n:
+＃                L.remove(x)
+＃                print(n,'的信息被删除')
+＃while True:
+＃    print('''
+＃    1.录入学生信息（姓名，年龄，成绩)\n
+＃    2.打印学生个数\n
+＃    3.打印学生年龄均值\n
+＃    4.打印学生成绩均值\n
+＃    5.删除学生信息\n
+＃    ''')
+＃    s=input('请输入1~5实现各功能：')
+＃    if s=='1':
+＃        L=Student.info_list()
+＃        continue 
+＃    if s=='2':
+＃        Student.print_count(L)
+＃        continue 
+＃    if s=='3':
+＃        Student.get_age_average(L)
+＃        continue 
+＃    if s=='4':
+＃        Student.get_score_average(L)
+＃        continue 
+＃    if s=='5':
+＃        Student.del_info(L)
+＃        continue 
+＃    break
+＃----------------------------------------------------老师写的第一个（面向过程）----------------------------------------------
+＃class Student:
+＃    def __init__(self,n,a,s):
+＃        self.name=n
+＃        self.age=a 
+＃        self.score=s 
+＃infos=[]
+＃def input_student():
+＃    L=[]
+＃    while True:
+＃        n=input('请输入学生姓名')
+＃        if not n:
+＃            break
+＃        a=int(input('请输入年龄'))
+＃        s=int(input('请输入成绩'))
+＃        L.append(Student(n,a,s))
+＃    return L
+＃def del_student(L):
+＃    n=input('输入要删除学生的姓名：')
+＃    for index,s in enumerate(L):
+＃        if s.name==n:
+＃            del L[index]
+＃            return 
+＃
+＃def print_student_count(L):
+＃    print(len(L))
+＃
+＃def print_avg_score(L):
+＃    total_score=sum((s.score for s in L))
+＃    print('平均成绩是:',total_score/len(L))
+＃
+＃def print_avg_age(L):
+＃    total_age=sum((s.age for s in L))
+＃    print('平均成绩是:',total_age/len(L))
+＃
+＃infos+=input_student()
+＃print(infos)
+＃
+＃del_student(infos)
+＃print(infos)
+＃
+＃print_student_count(infos)
+＃print_avg_age(infos)
+＃print_avg_score(infos)
+＃-----------------------------------------------老师写的第二个（面向对象）－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+＃class Student:
+＃    def __init__(self,n,a,s):
+＃        self.name=n
+＃        self.age=a 
+＃        self.score=s 
+＃    infos=[]
+＃    @classmethod
+＃    def input_student(cls):
+＃        while True:
+＃            n=input('请输入学生姓名')
+＃            if not n:
+＃                break
+＃            a=int(input('请输入年龄'))
+＃            s=int(input('请输入成绩'))
+＃            cls.infos.append(Student(n,a,s))
+＃        return cls.infos
+＃    @classmethod
+＃    def del_student(cls):
+＃        n=input('输入要删除学生的姓名：')
+＃        for index,s in enumerate(cls.infos):
+＃            if s.name==n:
+＃                del cls.infos[index]
+＃                return 
+＃    @classmethod
+＃    def print_student_count(cls):
+＃        print('共输入学生个数：',len(cls.infos))
+＃    @classmethod    
+＃    def print_avg_score(cls):
+＃        total_score=sum((s.score for s in cls.infos))
+＃        print('平均成绩是:',total_score/len(cls.infos))
+＃    @classmethod    
+＃    def print_avg_age(cls):
+＃        total_age=sum((s.age for s in cls.infos))
+＃        print('平均成绩是:',total_age/len(cls.infos))
+＃    @classmethod    
+＃    def output_student(cls):
+＃        for s in cls.infos:
+＃            print(s.name,s.age,s.score)
+＃
+＃Student.input_student()
+＃Student.output_student()
+＃Student.del_student()
+＃Student.output_student()
+＃Student.print_student_count()
+＃Student.print_avg_score()
+＃－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+
+继承(inheritance) 和 派生(derived)
+　继承是从已有的类中派生出新的类，新类具有原类的属性和行为，并能扩展新的能力
+　派生类就是从一个已有的类中衍生出新类，在新的类上可以添加新的属性和行为
+作用：
+　１．用继承派生机制，可以将一些共有功能加在基类中，实现代码的共享
+　２．在不改变基类代码的基础上改变原有类的功能
+名词：
+　基类(base class),超类(super class),父类(father class)
+　派生类（derived class）,子类（child class）
+---------------------------------------------------------------------------
+单继承
+　语法：
+class 类名(基类名):
+    语句块
+说明：
+　单继承是指派生类由一个基类衍生出来
+示例：
+------------------------------------------------------------
+# inherit.py
+
+
+# 此示例示意单继承的定义方法和用法
+class Human:
+    def say(self, what):
+        print("说:", what)
+
+    def walk(self, distance):
+        print("走了", distance, '公里')
+
+
+class Student(Human):
+    def study(self, subject):
+        print("正在学习", subject)
+
+
+class Teacher(Student):
+    def teach(self, subject):
+        print("正在教", subject)
+
+
+h1 = Human()
+h1.say('今天天气真好')
+h1.walk(5)
+
+
+s1 = Student()
+s1.walk(4)
+s1.say('感觉有点累')
+s1.study('Python')
+
+
+t1 = Teacher()
+t1.teach("面向对象")
+t1.walk(6)
+t1.say('太累了，今天晚吃啥')
+t1.study('英雄联盟')
+----------------------------------------------------------------------------
+继承说明：
+　Python3任何类都直接或间接的继承自object类
+　object类是一切类的超类
+－－－－－－－－－－－－－－－－－－－－－－－－－
+类的__base__属性
+　作用：
+　　用来绑定此类的基类
+
+python3中内建内继承关系：
+>>>help(__builtins__)
+--------------------------------------------------------------
+覆盖override
+ 什么是覆盖：
+ 　覆盖是指在有继承关系的类中，子类中实现了与基类同名的方法，在子类的实例调用该方法时，实际调用的是子类中覆盖版本，这种现象叫覆盖
+ 示例：
+----------------------------------------------------------------------------
+#override.py
+#此示例示意覆盖的语法
+class A:
+    def work(self):
+        '''父类的方法'''
+        print('A.work被调用')
+class B(A):
+    def work(self):
+        '''此方法会覆盖父类的work方法'''
+        print('B.work被调用')
+b=B()
+b.work()#B.work被调用
+a=A()
+a.work()#A.work被调用
+A.work(b)#A.work被调用
+----------------------------------------------------------------------------
+子类对象显式调用基类方法的方式：
+　基类名.方法名（实例，实际调用传参．．．）
+----------------------------------------------------------------------------
+super函数
+ super(cls,obj)返回obj绑定cls的超类的实例obj,即返回结果为：　cls类的实例obj作为cls的超类的实例（要求obj必须是cls类型的实例）
+ super()返回绑定超类的实例，等同于super(__class__,实例方法的第一个参数)-->必须在方法中调用
+
+ 作用：
+ 　借助super()返回实例间接调用父类的覆盖方法
+ 示例：
+------------------------------------------------------------
+#super.py
+#此示例示意用super函数显式的调用被覆盖的方法
+
+class A:
+    def work(self):
+        '''父类的方法'''
+        print('A.work被调用')        
+class B(A):
+    def work(self):
+        '''此方法会覆盖父类的work方法'''
+        print('B.work被调用')
+    def mywork(self):
+        #调用自己的方法
+        self.work()
+        #调用父类的方法
+        super(B,self).work()
+        super().work
+b=B()
+b.mywork()
+#B.work被调用
+#A.work被调用
+--------------------------------------------------------------
+显式调用基类的初始化方法：
+　当子类中实现了__init__方法，基类的初始化方法并不会被调用，此时需要的显式调用基类的初始化方法
+示例：
+---------------------------------------------------------------
+#super_init.py
+#此示例示例用super函数显式调用基类的初始化方法
+class Human:
+    def __init__(self,n,a):
+        self.name,self.age=n,a
+        print('Human.__init__被调用')
+    def show_info(self):
+        print('姓名',self.name)
+        print('年龄',self.age)
+        print('父类')
+class Student(Human):
+    def __init__(self,n,a,s=0):
+        super(Student,self).__init__(n,a)
+        self.score=s
+        print('Student.__init__被调用')
+    def show_info(self):
+        super().show_info()
+        print('成绩',self.score)
+        print('子类')
+
+s=Student('小张',20,100)
+s.show_info()
+# Human.__init__被调用
+# Student.__init__被调用
+# 姓名 小张
+# 年龄 20
+# 父类
+# 成绩 100
+# 子类
+
+
+s=super(Student,Student('小张',21,100))
+s.show_info()
+# Human.__init__被调用
+# Student.__init__被调用
+# 姓名 小张
+# 年龄 21
+# 父类
+---------------------------------------------------------------------------------
+练习：
+１．修改原来的学生信息管理系统，将原来用字典存储学生信息改变用学生Student类型的对象来存储信息
+要求：
+　①类Student存于文件student.py中
+　②尽量少在类的外部使用实例变量（建议增加实例方法来获取实例变量的信息）

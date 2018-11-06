@@ -1,0 +1,268 @@
+进程和线程的区别和联系：
+
+①两者都是多任务编程方式，都能够使用计算机的多核资源
+②进程的创建和删除消耗的计算机资源比线程要多
+③进程空间独立，数据互不干扰，有专门的通信方法，而线程使用全局变量进行通信
+④一个进程可以创建多个线程分支，两者之间存在包含关系
+⑤多个线程共用进程的资源，在共享资源操作时往往需要同步互斥操作
+⑥进程、线程都在系统中有自己的特有标志，如ID，代码段，命令集等
+
+
+
+
+进程和线程的使用场景：
+
+任务相对比较独立，选择进程；多任务协同、高延迟、阻塞相对比较高的选择线程
+*某个任务中并发比较多，此时多线程消耗资源较少
+*不用的独立的任务模块，用多进程相对空间比较好管理
+*在通信上要考虑可行性，如果数据逻辑复杂，需要的同步互斥较多，这时使用线程同步互斥可能会容易出错
+
+
+
+
+
+要求：
+1.进程线程的区别
+2.进程间通信都知道哪些，有什么特点
+3.什么是同步互斥，你在什么情况下使用
+4.给一个情形，分析用进程还是用线程为什么
+5.问一些概念和处理方法，僵尸进程 进程状态 线程效率
+
+
+
+
+
+
+服务器
+
+服务器：包含（软件服务器）和（硬件服务器）
+*硬件服务器：主机 集群
+*软件服务器：编写的服务端应用程序，在硬件服务器上运行，提供一定的完整后端服务
+  httpserver-->处理http请求
+  webserver -->网站的后端服务程序
+  邮箱服务器  -->邮件处理
+  ftp服务器  -->文件处理
+前端  用户端  客户端  前台应用---特征：与用户直接交互，直接给用户使用的应用程序
+                             要求：良好的用户体验
+后端  服务端  后台应用----------特征：提供逻辑处理、数据处理
+                             要求：更高的并发量、更快的处理速度、更强的安全性（可以从硬件改进：加钱增机器集群//从软件改进：研究更先进的算法、多路复用、多进程）
+服务器模型：
+  服务器的基本结构：c/s 客户端服务器模型
+                 b/s 浏览器服务器模型                             
+
+
+
+
+
+
+网络通信模型：
+
+  循环服务器模型：循环处理客户端请求，同一时刻只能处理一个请求，处理完毕后再处理下一个（tcp server/udp server都是这种模型）
+    优点：实现简单，占用资源少
+    缺点：无法同时处理多个客户端请求
+    适用情况：处理的任务可以很快完成，不需要建立并发，很显然udp比tcp更加适合循环服务器模型
+
+  并发服务器模型：能够同时处理多个客户端的请求（IO并发：io多路复用）
+    优点：资源消耗少，能同时处理多个IO
+    缺点：只能监控IO事件，当多个任务都是CPU计算事件时无法同时处理
+
+  多进程多线程并发：为每个客户端创建单独的进程或者线程处理客户端请求
+    优点：每个客户端都可以长期占有服务器，能使用多核资源处理IO或者CPU计算
+    缺点：资源消耗较高
+
+
+
+
+
+
+>>多进程并发： 
+    基于fork完成多进程网络并发
+    1.创建套接字，绑定，监听
+    2.等待接收客户端连接请求accept
+    3.有新的客户端连接时，创建新的进程处理客户端请求
+    4.原有进程继续等待其他客户端连接，新的进程处理客户端具体请求
+    5.如果客户端退出，则销毁对应的进程
+--------------------------------------------------------------------------
+from socket import *
+import os,sys 
+def client_handler(c):
+    print('客户端：',c.getpeername())
+    while True:
+        data=c.recv(1024)
+        if not data:
+            break
+        print(data.decode())
+        c.send(b'Receive your message')
+    c.close()
+    sys.exit(0)#将子进程销毁
+#创建套接字
+HOST='0.0.0.0'
+PORT=8888
+ADDR=(HOST,PORT)
+s=socket()#tcp套接字
+s.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+s.bind(ADDR)
+s.listen(5)
+#循环等待客户端连接
+print('Listen to the port 8888...')
+while True:
+    try:
+        c,addr=s.accept()
+    except KeyboardInterrupt:
+        sys.exit('退出服务器')
+    except Exception as e:
+        print('Error:',e)
+        continue 
+    #创建新的进程处理客户端的请求
+    pid=os.fork()
+    #子进程处理客户端请求
+    if pid == 0:
+        p=os.fork()
+        if p == 0:
+            s.close()
+            client_handler(c)#客户端处理函数
+        else:
+            os._exit(0)
+    #父进程或者创建进程失败都继续等待下个客户端连接
+    else:
+        c.close()
+        os.wait()
+        continue 
+------------------------------------------------------------------
+
+
+
+
+
+
+>>ftp文件服务器：
+
+
+
+功能：
+  1.服务端和客户端有两部分，要求启动服务端后可以有多个客户端同时操作
+  2.客户端可以查看服务器文件库中有什么文件（文件库只有普通文件，不算隐藏文件）
+  3.客户端可以选择文件库中的文件进行下载，下载到本地
+  4.客户端还可以上传本地文件到服务器文件夹（不设权限）
+  5.使用print打印一定的格式，作为命令的输入提示界面
+
+技术分析： fork并发 tcp传输 
+         如何查看一个文件夹中的文件列表 os.listdir()
+         如何判断是一个普通文件 os.path.isfile()
+结构设计： 使用类将功能封装
+工作步骤：
+         先搭建网络连接
+         设计类
+         将功能函数写在类中
+         逐一实现并测试
+具体功能：
+         1.搭建网络连接
+           服务端：创建fork并发服务端程序
+           客户端：创建套接字，进行网络连接，连接成功后打印命令选项界面等待输入命令
+         2.设计类
+         3.查看文件列表
+           客户端：发送请求
+                  接受服务端确认
+                  循环接收服务器发来的文件名并打印
+           服务端：接受请求
+                  判断可否执行反馈结果
+                  发送文件名称
+         4.下载文件
+           客户端：发送请求 G filename 
+                  等待接收服务端确认
+                  接收文件
+           服务端：接收请求
+                  判断文件是否存在反馈结果
+                  发送文件
+
+
+
+
+
+
+多线程并发： 
+基于threading模块
+1.创建套接字，绑定接听
+2.接收客户端请求
+3.创建新的线程处理客户端的请求
+4.主线程继续等待其他客户端连接，分支线程处理具体请求
+5.当客户端退出则线程退出
+---------------------------------------------------------------
+
+def handler(c):
+    print('Connect from:',c.getpeername())
+    while True:
+        data=c.recv(1024)
+        if not data:
+            break
+        print(data.decode())
+        c.send(b'Receive')
+    c.close()
+
+HOST='0.0.0.0'
+PORT=8888
+ADDR=(HOST,PORT)
+
+#创建套接字
+s=socket()
+s.getsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+s.bind(ADDR)
+s.listen(5)
+
+#接收客户端请求
+while True:
+    try:
+        c,addr=s.accept()
+    except KeyboardInterrupt:
+        s.close()
+        sys.exit('服务期退出')
+    except Exception as e:
+        print(e)
+        continue
+    
+    #创建线程
+    t=Thread(target=handler,args=(c,))
+    t.setDaemon(True)
+    t.start()
+----------------------------------------------------------
+
+
+
+
+作业：
+1.整理ftp服务器程序
+2.复习http协议
+3.基于Process的多进程并发服务端
+--------------------------------------------------------------
+from socket import *
+import os
+import sys
+import time
+from multiprocessing import Process
+def handler(c):
+    while True:
+        data = c.recv(1024)
+        if not data:
+            break
+        print(data.decode())
+        c.send('Received\n'.encode())
+    c.close()
+    sys.exit(0)
+HOST = '0.0.0.0'
+PORT = 8888
+ADDR = (HOST, PORT)
+s = socket()
+s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+s.bind(ADDR)
+s.listen(5)
+while True:
+    try:
+        c, addr = s.accept()
+    except KeyboardInterrupt:
+        sys.exit('服务器退出')
+    except Exception as e:
+        print('Error:', e)
+    p = Process(target=handler, args=(c,))
+    p.daemon=True
+    p.start()
+------------------------------------------------------------------------

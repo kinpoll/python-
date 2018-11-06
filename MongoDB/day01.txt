@@ -1,0 +1,370 @@
+MongoDB(芒果数据库)
+
+
+
+
+数据存储阶段
+>>文件管理阶段(.txt .doc .xls)
+优点：数据便于便于长期保存，数据可以大量存储，使用简单
+缺点：数据的存储结构比较随意，数据的查找修改效率低，不方便扩展和程序调用
+>>数据库管理阶段
+优点：数据的格式化存储便于操作，降低了数据的冗余，提高了增删改查的效率，方便程序调用和扩展
+缺点：使用上往往需要特定的语句或者操作，相对复杂
+
+
+
+
+几个概念
+>>数据：能够输入到计算机中并识别处理的信息集合
+>>数据结构：研究一个数据集合中，数据之间关系的学科
+>>数据库：按照数据结构，存储管理数据的仓库。数据库是在数据库管理系统的管理和控制下在一定介质上存储的数据集合
+>>数据库管理系统：数据库管理软件，用于维护建立数据库
+>>数据库系统：由数据库和数据库管理系统等开发工具组成的集合
+
+
+
+
+
+
+
+关系型数据库
+定义：采用关系型模型来组织数据结构的数据库(二维表)
+eg: Oracle DB2 SQLServer Mysql Sqlite
+优点：容易理解，逻辑类似常见的表格
+     使用很方便，都使用sql语句进行数据操作，sql语句很成熟
+     数据的一致性高，冗余低，完整性好
+     技术成熟，可以使用表关联等复杂操作
+缺点：每次数据操作都需要sql解析，消耗较大
+     关系型数据库内部操作往往需要加锁，也影响了处理速度
+     不能很好地处理海量数据的高并发需求，读写能力差
+     由于数据的一致性等规定，灵活性也不高
+
+
+
+
+
+
+
+非关系型数据库(NoSql--Not Only Sql)
+优点：并发能力强，读写速度快，可以更好的应对海量数据并发需求
+     普遍比较灵活，容易扩展，弱化了数据的一致性
+缺点：通用性差，没有像sql那样一致的语句操作
+     灵活性强，会导致一定的操作混乱
+     技术成熟度比关系型数据库差
+
+
+
+
+
+
+
+Nosql 适应情况：
+1.对数据一致性要求较低
+2.应对数据高并发存储的可能性较大
+3.比较容易建立非关系型数据库模型
+
+
+
+
+
+
+Nosql分类
+键值型数据库：Redis
+列存储数据库：HBase
+文档型数据库：MongoDB
+图形数据库
+
+
+
+
+
+
+
+MongoDB 数据库 （非关系型、文档型数据库）
+特点：
+1.由c++编写的数据库管理系统
+2.支持丰富的增删改查操作
+3.有丰富的存储类型，技术相对成熟
+4.支持众多的编程语言操作
+5.使用方便，便于扩展和部署
+
+
+
+
+
+
+MongoDB安装：
+linux：sudo apt-get install mongodb 
+安装位置：/var/lib/mongodb
+配置文件：/etc/mongodb.conf
+命令位置：/user/bin
+
+手动安装：
+1.www.mongodb.com 下载对应系统的安装包
+2.将压缩包解压到一个目录下/usr/local
+3.进入解压后的文件夹目录，里面的bin目录即命令集所在目录，将这个目录(bin)路径加入环境变量即可
+  eg：将/opt/mongodb/bin 加入环境变量，终端执行：
+  PATH=$PATH:/opt/mongodb/bin 
+  export PATH
+  如果不想每次启动执行则将以上两句写入主目录下的.bashrc中
+
+
+
+
+
+
+MongoDB 命令
+1.设置数据库的存储位置：mongod --dbpath 目录
+eg：将database目录设置为数据库存储目录
+mongod --dbpath database
+2.设置数据库连接端口：mongod --port 8888
+*如果不设置默认端口为27017
+3.启动MongoDB操作界面(mongo shell):mongo 
+  退出该界面用 ctrl-c或者quit()或者exit;
+
+
+
+
+
+
+
+MongoDB数据库结构：
+键值对--》文档--》集合--》数据库
+----------------------------
+ ID   |   NAME   |   AGE
+----------------------------
+ 1    |   Lily   |   17
+----------------------------
+ 2    |   Lucy   |   18
+----------------------------
+{'_id':1,
+'NAME':'Lily',
+'AGE':17
+},
+{'_id':2,
+'NAME':'Lucy',
+'AGE':18
+}
+
+
+
+
+
+
+
+mysql 和 mongodb 概念对比:
+----------|-------------|-------------|
+mysql     |   mongodb   |     一含义   |
+----------|-------------|-------------|
+database  |   database  |     数据库   |
+----------|-------------|-------------|
+table     |  collection |     表/集合  |
+----------|-------------|-------------|
+column    |   field     |     字段/域  |
+----------|-------------|-------------|
+row       |   document  | 一一记录/文档 |
+----------|-------------|-------------|
+index     |   index     |     一索引   |
+----------|-------------|-------------|
+
+
+
+
+
+
+
+
+MongoDB基本指令：
+
+
+1.创建数据库：
+use database                   e.g.  创建一个名字为stu的数据库
+2.查看系统中的数据库：                   use stu
+show dbs                             * use实际为选择使用哪个数据库，当数据库不存在时会自动创建
+3.数据库的命名规则：                    * use 后并不会立即创建出数据库，而是需要等到插入数据时数据库才会创建
+  ①使用utf-8字符
+  ②不能含有"空格"和"."和"/"和"\"和"'\0'"这些字符
+  ③长度不超过64字节
+  ④不要和系统数据库重名
+4.全局变量db：db变量代表当前正在使用的数据库
+ *如果不选择任何数据库db为test
+5.删除数据库：db.dropDatabase()遵循小驼峰规则
+6.数据库的备份和恢复(终端中输入)
+  备份数据库：mongodump -h dbhost -d dbname -o dir
+  eg:       mongodump -h 127.0.0.1 -d stu -o .  
+             备份到   -h      本机中的    -d   将stu数据库  -o 当前目录库文件
+  
+  数据恢复：mongorestore -h dbhost:port -d dbname path
+  eg：     mongorestore -h localhost:27017 -d stu ./stu
+             恢复到     -h    某一台主机的  -d   数据库上  将目录数据库文件    
+7.数据库监控命令(终端中输入)：
+  ①mongostat 查看数据库运行状态
+    insert query update delete  每秒增、查、改、删的次数
+    command  每秒执行mongo命令次数
+    flushes  每秒和磁盘交互次数
+    vsize    使用虚拟内存情况
+    res      使用物理内存情况
+    time     运行时间
+  
+  ②mongotop 监测每个数据库中数据表的读写情况
+    ns 数据集合
+    total 总时长
+    read 读时长（涉及到查找的操作）
+    write 写时长（涉及到修改的操作）
+8.创建集合collection
+  ①db.createCollection('集合名')
+    eg：db.createCollection('class1')
+  ②当插入数据时需要指定集合，此时如果集合不存在，则自动创建class2
+    eg:db.class2.insert({'name':'阿宝','age':35,'sex':'m'})
+9.查看数据库中有哪些集合：show collections
+                      show tables
+10.集合命名规则
+  ①.合法的UTF-8字符
+  ②.不能有‘\0’
+  ③.不能以system.开头，因为这是系统保留集合前缀 
+  ④.不能和关键字重复
+11.删除集合：db.collection.drop()
+           eg： 删除class2集合
+                db.class2.drop()
+12.集合的重命名：db.collection.renameCollection("new_name")
+               eg：将class集合重命名为 class0
+                   db.class.renameCollection("class0")
+
+
+
+
+
+
+
+
+
+
+MongoDB数据库集合文档
+
+什么是文档？
+  *文档是mongodb数据库中数据的基本组织形式
+  *文档由键值对构成，每个键值对表达一个数据项
+  *MongoDB文档属于bson类型数据
+  *文档中键值对是有序的
+  *文档中键值对严格区分大小写
+  bson-----json-------JavaScript（宇宙已经不可阻挡的不断往后端渗透的‘前端编程语言’）
+①键：即文档的域，表达了一个键值对的含义
+***键的命名规则：
+    1. utf-8格式字符串
+    2. 不能使用‘\0’
+    3. 一个文档中的键不能重复
+②值：即文档存储的数据
+③数据库中存储的数据类型：
+    类型                  值
+    
+    整型                 整数 1  2   3
+    布尔类型             true  false
+    浮点型               小数
+    Array               数组
+    Date                时间日期
+    Timestamp           时间戳
+    String              字符串
+    Symbol              特殊字符串
+    Binary data         二进制子串
+    Null                null 空值
+    Object              内部文档（对象）
+    code                js代码
+    regex               正则子串
+    ObjectId            自动生成ID标记
+
+④ObjectId：
+"_id" : ObjectId("5ba07671b17d2b40342f7c5c")
+_id : 当mongodb插入文档时如果不指定_id域则自动生成主键_id域
+      值如果不自己指定即会自动生成一个ObjectId值
+值： 24位16进制  使用ObjectId经过算法处理保证其唯一性
+    5ba07671b17d2b40342f7c5c  
+    8位文档创建时间  6位  机器ID   4位进程id  6位计数器
+
+
+
+
+
+
+
+
+
+
+集合中的文档
+
+1.每个集合中的文档格式可以不同 
+   * 个数不同
+   * 域不相同
+   * 数据类型不同
+2.集合中文档各自比较独立，相互并不影响
+3.集合创建原则
+  1.集合中的文档要描述同一类事物
+  2.数据库中同一类数据尽量集中存放在相同的集合
+  3.集合中的文档嵌套层数不要太多
+4.插入文档
+db.collection.insert()
+功能 ： 插入一个文档
+参数 ： 要插入的文档
+  ①插入单个文档
+    eg： 
+    db.class0.insert({'name':'Lucy',"age":18,"sex":'w'})
+    db.class0.insert({_id:1,name:'Jame',age:16,sex:'m'})
+    * 插入操作中键可以不加引号
+    * 查看插入结果 db.class0.find()
+    * _id 值可以自己插入，但是不能重复
+  
+  ②插入多条文档
+  插入多条文档时，参数用中括号里面放入多个文档
+    e.g.
+    db.class0.insert([{name:"Alex",age:19,sex:'m'},{name:'Abby',age:18,sex:'w'}])
+  
+  ③其他插入方法
+  
+    》insertOne()  插入一条文档
+      db.class0.insertOne({name:"Levi",age:20,sex:'m'})
+    
+    》insertMany()  插入多条文档
+      db.class0.insertMany([{name:"John",age:16,sex:'m'},{name:"Lenzer",age:17,sex:'m'}])
+    
+    
+    》save插入文档
+    db.collection.save()
+      >>如果正常插入与insert用法相同
+        e.g.
+        db.class0.save({name:'Allen',age:19,sex:'m'})
+        db.class0.save([{name:"Sunny",age:17,sex:'w'},{name:'Alice',age:16,sex:'w'}])
+      >>如果插入数据是有_id域，且_id域值存在时则会修改原有文档，如果该值不存在则正常插入
+        db.class0.save({_id:2,name:'Mary',age:20,sex:'w'})
+    
+5.获取集合对象方法
+db.class0  ===> db.getCollection('class0')
+eg:
+db.getCollection("class0").find()                   
+
+
+
+
+
+
+
+
+
+
+查找操作：
+mysql：select ... from table where ...
+mongo：db.collection.find(query,field)
+1.查找集合中所有内容：
+db.collection.find() --> select * from table 
+2.find(query,field)
+功能：查找所有符合条件的文档
+参数：query 表示筛选条件，是一个键值对文档，默认表示查找所有内容--> db.class0.find({age:17})筛选年龄为17的文档
+     field 表示查找的域，也是一个键值对文档，用0值表示不查找某个域，用1值表示查找某个域-->db.class0.find({},{sex:0，age:0})不查找sex、age域
+                                                                           -->db.class0.find({},{name:1,age:1})只查找name、age域
+                                                                           -->db.class0.find({},{name:0,age:1})错误，要么全是0，要么全是1
+                                                                           -->db.class0.find({},{_id:0,name:1})正确，只有_id可以和其他域混合0/1使用
+*当某个普通域设置为0时，表示该域不查找，其他的域查找
+*如果设置为1，表示该域查找，其他的不查找
+*对于普通域在表达式值0和1不能在参数中同时出现
+*_id域比较特殊，如果不想查找必须明确_id:0     
+3.findOne(query,field)
+功能：查找第一条符合条件的文档
+eg：db.class0.findOne({age:17},{_id:0})查找第一条年龄为17的文档                                                                     

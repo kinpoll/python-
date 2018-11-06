@@ -1,0 +1,379 @@
+一、进程间通信之共享内存：
+通信原理：在内存空间开辟一个区域，对多个进程可见，进程可以写入内容或读取内容，但是每次写入的内容会覆盖之前的内容
+from multiprocessing import Value,Array
+  ①obj=Value(ctype,obj)
+  功能：开辟共享内存空间
+  参数：ctype 本质是一个字符串，表示共享内存中要存储的数据类型
+        常用类型：int-->'i' 
+                  float-->'f'
+                  char(bytes类型)--->'c'
+       obj 共享内存中放入的初始化数据，必须与ctype数据类型相对应
+  obj.value 对该属性的修改即对共享内存数据的修改
+-------------------------------------------------------------------------
+from multiprocessing import Value,Process 
+import time
+import random
+
+money=Value('i',40000)
+def man():
+    for i in range(30):
+        time.sleep(0.2)
+        money.value+=random.randint(1,1000)
+def girl():
+    for i in range(30):
+        time.sleep(0.16)
+        money.value-=random.randint(100,900)
+m=Process(target=man)
+g=Process(target=girl)
+m.start()
+g.start()
+m.join()
+g.join()
+print(money.value)
+------------------------------------------------------------------------------
+
+  ②obj=Array(ctype,obj)
+  功能：创建共享内存
+  参数：ctype 要存储的数据类型
+        obj 存入一个结构化的数据（列表，bytes字符串）表示共享内存中的初始数据
+  	        传入正整数n，则表示在共享内存中开辟指定大小的数据空间
+  返回值：共享内存对象
+  *可以通过遍历获取每个值，支持索引操作
+  eg：obj[2]表示获取共享内存中第三项，对其修改即对共享内存的修改
+  *如果存入的是字符串，可以通过obj.value直接打印整个字符串
+-------------------------------------------------------------------------
+
+-------------------------------------------------------
+进程通信|   管道     |    消息队列    |    共享内存    |
+--------|------------|----------------|----------------| 
+开辟空间|  内存      |   内存         |    内存        |     
+--------|------------|----------------|----------------|
+读写方式|  两端读写  |   先进先出     |    覆盖之前内容|
+        |  双向/单向 |                |                |
+--------|------------|----------------|----------------|            
+效率    |  一般      |    一般        |    较高        |
+--------|------------|----------------|----------------|           
+应用    |   多用于父 |    广泛灵活    |    需要注意    |
+        |   子进程   |                |    进行互斥操作|
+--------|------------|----------------|----------------|
+二、信号量（信号灯）
+原理：给定一个数量，多个进程都可见。多个进程可以通过方法操作数量，达到协同工作的目的
+from multiprocess import Semaphore
+  sem=Semaphore(num)
+  功能：创建信号量对象
+  参数：信号量的初始值
+  返回值：信号量
+  
+sem.acquire() 将信号量减1，当信号量为0时会阻塞
+sem.release() 将信号量加1
+sem.get_value() 获取信号量数量 
+--------------------------------------------------------
+from multiprocessing import Semaphore,Process
+from time import sleep
+import os
+sem=Semaphore(3)
+def fun():
+    print('%d 想执行事件'%os.getpid())
+    #消耗一个信号量,有信号量则不阻塞
+    sem.acquire()
+    print('%d执行想执行的事件'%os.getpid())
+    sleep(3)
+    print('%d事件执行完毕'%os.getpid())
+jobs=[]
+#5个进程消耗了3个
+for i in range(5):
+    p=Process(target=fun)
+    jobs.append(p)
+    p.start()
+#不够用了，又增加了3个量
+for i in range(3):
+    sleep(5)
+    sem.release()#增加一个信号量
+for i in jobs:
+    i.join()
+print(sem.get_value())#最后剩1个
+--------------------------------------------------------
+三、多任务编程之线程（Thread）
+①什么是线程？
+    1.线程也是多任务编程方法
+    2.也可以使用计算机的多核资源
+	3.线程被称为轻量级的进程
+	4.线程是系统分配内核的最小工作单元
+②线程特征：
+    1.一个进程可以包含多个线程
+	2.线程是一个运行的过程，消耗计算机资源
+	3.多个线程的执行相互不影响不干扰
+	4.线程的创建销毁，消耗的资源远远小于进程
+	5.一个进程中的多个线程，共享这个进程的系统资源
+	6.每个线程也有自己特有的特征，比如ID,指令集等
+③threading 模块创建线程：(from threading import *在这里不可用，必须导入具体属性)
+    from threading import Thread 
+    t=Thread()
+    功能：创建线程对象
+    参数：target 绑定线程函数
+          args 元祖 给线程函数位置传参
+    	  kwargs 字典 给线程函数键值传参
+    	  name 线程名臣 默认为Thread-1
+    t.start() 启动线程
+	t.join([timeout]) 回收线程 
+-------------------------------------------------------------
+import threading 
+from time import sleep
+import os
+a=1
+#线程函数
+def music():
+    global a 
+    print('a=',a)
+    a=10000
+    for i in range(5):
+        sleep(2)
+        print('播放学猫叫',os.getpid())
+#创建线程对象
+t=threading.Thread(target=music)
+t.start()
+#在主线程运行
+for i in range(3):
+    sleep(3)
+    print('播放卡路里',os.getpid())
+t.join()
+print('main thread a:',a)
+-------------------------------------------------------------	
+#线程参数的传递示例
+from threading import * 
+from time import sleep
+import os
+def fun(sec,name):
+    print('线程参数传递')
+    sleep(sec)
+    print('%s线程执行完毕'%name)
+#创建多个线程执行
+thread=[]
+for i in range(3):
+    t=Thread(target=fun,args=(2,),kwargs={'name':'t%d'%i})
+    thread.append(t)
+    t.start()
+for i in thread:
+    i.join()
+-------------------------------------------------------------
+④线程对象属性：
+t=threading.Thread()
+t.name 线程名称
+t.setName 设置名称 
+t.getName 获取名称
+t.is_alive() 线程状态
+threading.currentThread() 在线程函数中获取当前线程对象
+t.daemon 默认为False此时主线程退出，分支线程会继续执行
+         如果设置为True则主线程退出，分支线程也随之退出
+t.setDaemon(True) 设置daemon属性-->在t.start()前设置，通常不和t.join()同用
+t.isDaemon() 判断daemon值
+-------------------------------------------------------------
+from threading import currentThread, Thread
+from time import *
+def fun():
+    sleep(3)
+    # 获取当前线程对象
+    print('执行%s线程' % currentThread().getName())
+    print('线程属性测试')
+t = Thread(target=fun, name='Tarena')
+# 设置daemon
+t.setDaemon(True)
+t.daemon = False
+t.start()
+# 设置 获取 线程名
+t.setName('Tedu')
+print('Thread name:', t.name)
+print('Thread get name:', t.getName())
+print('judge status:', t.is_alive())  # 线程状态
+# t.join()
+print('***********主线程结束***************')
+-------------------------------------------------------------
+
+四、创建自定义线程类
+步骤：
+1.继承Thread
+2.添加自己属性写__init__,加载父类的init
+3.重写run方法
+4.使用自己的类生产线程对象，调用start启动线程，此时会自动运行run方法作为线程执行
+-------------------------------------------------------------------------------
+from threading import Thread
+from time import sleep, ctime
+class MyThread(Thread):
+    def __init__(self, target, args=(), kwargs={}, name='Therad-1'):
+        super().__init__()
+        self.target = target
+        self.args = args
+        self.kwargs = kwargs
+        self.name = name
+    def run(self):
+        self.target(*self.args, **self.kwargs)
+def player(sec, song):
+    for i in range(20):
+        print('Playing %s:%s' % (song, ctime()))
+        sleep(sec)
+t = MyThread(target=player, args=(3,), kwargs={'song': '凉凉'}, name='Tedu')
+t.start()
+t.join()
+---------------------------------------------------------------------------------
+五、线程间通信：
+  通信方法：使用进程空间中全局变量通信
+  注意事项：共享资源的争夺，往往需要同步互斥机制的协调
+线程的同步互斥：
+  共享资源（临界资源）：多个线程都可以操作的资源称为共享资源
+  临界区：指一段代码段，对临界资源操作的代码段称为临界区
+  
+  同步：同步是一种合作关系，为完成任务，多进程或者线程之间形成一种协调，按照必要的步骤有序执行操作临界资源
+  互斥：互斥是一种制约关系，当一个进程或者线程使用临界资源时会进行加锁处理，此时另一个进程或者线程就无法操作临界资源，直到解锁后才能操作
+  
+线程的同步互斥方法：
+  ①线程 Event
+  from threading import Event 
+  e=Event() 创建线程event对象
+  e.wait([timeout])
+  功能：阻塞函数，等待e被设置
+  参数：超时时间
+  
+  e.set() 将e变为设置状态
+  e.clear() 将e变回未设置状态
+  e.is_set() 判断当前的e的状态，被设置得到True否则False
+--------------------------------------------------------------------------
+ #线程间通信的示例：
+from threading import Event,Thread
+from time import sleep 
+s=None #作为通信变量
+e=Event()
+def bar():
+    print('Bar 拜山头')
+    sleep(3)
+    global s
+    s='天王盖地虎'
+    e.set()
+b=Thread(target=bar)
+b.start()
+sleep(2)
+print('说对口令就是自己人')
+e.wait()#阻塞等待，分支线程设置e.set
+if s=='天王盖地虎':
+    print('确认过眼神，你是对的人')
+else:
+    print('打死他')
+e.clear()
+b.join()
+---------------------------------------------------------------------------------
+②线程锁 Lock
+from threading import Lock
+
+lock=Lock() 创建锁对象
+
+lock.acquire() 上锁 如果已经上锁调用此函数会阻塞
+lock.release() 解锁 
+
+with lock： 上锁操作 
+    ...
+with语句块结束自动解锁
+---------------------------------------------------------------------------------
+from threading import Thread,Lock
+a=b=0
+lock=Lock()#生成一个锁对象
+def value():
+    while True:
+        lock.acquire()
+        if a!=b:
+            print('a=%d,b=%d'%(a,b))
+        lock.release()
+t=Thread(target=value)
+t.start()
+while True:
+    with lock:
+        a+=1
+        b+=1
+t.join()
+-----------------------------------------------------------------------------------
+六、python线程的GIL问题 （全局解释器锁）
+GIL：由于python解释器设计中加入了解释器锁，导致python解释器在同一时刻只能解释一个线程。所以大大降低了python的执行效率
+后果：python线程一般会用在大量阻塞的IO程序，或者高延迟的IO程序中（网络消息收发）。因为python线程在遇到阻塞时会主动让出解释器。
+GIL建议解决：
+  *尽量不用线程
+  *不使用c作为解释器java c#
+  *可以使用多个组合的并发方案
+
+效率测试
+Line cpu: 9.014907121658325
+Line IO: 4.548823118209839
+
+thread cpu: 9.38966417312622
+thread  IO: 4.6143529415130615
+
+Process  cpu: 5.466824531555176
+Process  IO: 2.9468178749084473
+
+
+作业 ： 
+1. 总结进程线程差异
+---------------------
+2. 复习网络编程基本内容
+3. 司机和售票员的故事
+   * 创建父子进程分别代表司机和售票员
+   * 当售票员收到SIGINT信号，给司机发送SIGUSR1信号此时司机打印"老司机开车了"
+     当售票员收到SIGQUIT信号，给司机发送SIGUSR2信号此时司机打印"车速有点快，系好安全带"
+     当司机捕捉到SIGTSTP信号，给售票员发送SIGUSR1，售票员打印"到站了，请下车"
+   * 到站后 售票员先下车，司机下车 （子进程先退出）
+
+   说明 ： SIGINT  SIGQUIT SIGTSTP从键盘发出
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  

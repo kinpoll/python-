@@ -1,0 +1,435 @@
+pip3 install ＊作业，第二阶段项目练习自学
+pymysql数据库
+tkinter模块
+pythonwx模块
+
+day16回顾
+文件
+长期存储数据
+单位是字节（byte）
+
+文件的操作：
+　１．打开文件
+　２．读/写文件
+　３．关闭文件（释放资源[缓冲区，内核资源]）
+
+打开文件的函数：
+open('文件路径名',打开模式)
+
+文件的方法：
+　F.close()关闭文件
+　#读，仅在r模式下可用
+　F.read(n)读取n个字节或字符
+　F.readline()
+　F.readlines()
+　#写，仅在'w','x','a'模式下可用
+　F.write(字节串/字符串)
+　F.writelines([字节串/字符串元素])
+　#以下两个函数通常只对二进制文件进行操作
+　F.seek(偏移量，起始位置)#改变读写位置
+　F.tell()#得到当前的读写位置指针
+　F.flush#清空缓冲区（缓冲区大小通常是4096个字节即４k）
+
+打开模式：
+二进制模式:'b'
+　把文件看成是字节数据，读写时会直接把磁盘数据以字节串形式返回或写入
+文本模式: 't'
+　把文件看成是字符数据，读写过程当中会自动编／解码（默认是'utf-8'），而且会把换行符进行自动转换
+
+汉子编码
+只有两种：
+GB系列(国家标准)
+  -->GB18030(-->GBK(-->GB2312))
+UNICODE系列(国际标准)
+　UNICODE32(UNICODE16)<--->UTF-8互转
+2^32      　　2^16
+UNICODE32-->4byte表示一个汉子，耗费内存但可表示更多的文字
+
+编码字符串：
+'gb18030','gbk','gb2312','utf-8','ascii'..
+
+编码注释：
+#-*-coding:gbk-*-
+
+标准输入输出文件：
+sys.stdin
+sys.stdout
+sys.stderr
+=========================================================================================================================================
+day17笔记：
+面向对象编程object-Oriented Programming
+面向过程编程的基本单位：函数
+面向对象编程的基本单位：类class（面向对象是　归类总结面向对象）
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+什么是对象
+对象是指现实中的物体或实体（实例）
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+什么是面向对象
+把一切看成是对象（实例．．），用各种对象之间的关系来描述事务
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+对象都有哪些特征
+　对象有很多属性（名词，形容词）
+　　姓名，年龄，性别
+　对象有很多行为：
+　　学习，吃饭，睡觉，踢球，工作
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+什么是类：
+拥有相同属性和行为的对象分为一组即为一个类
+类是用来描述对象的工具，用类可以创建此类的对象（实例）
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+类的创建语句class语句
+语法：
+class 类名（继承列表）:
+    '''类的文档字符串'''
+    实例方法
+    类变量
+    类方法（@classmethod）
+    静态方法(@staticmethod)
+
+作用：
+ 创建一个类
+ 用于描述此对象的行为和属性
+ 类用于创建此类的一个或多个对象（实例）
+说明：
+ 类名必须是标识符
+ 类名实质是变量，它在创建类时绑定一个类
+示例：
+ #class.py
+ class Dog:
+     '''此语句用来定义一个新的类型　Dog'''
+     pass
+ print(Dog)
+-------------------------------------------------
+构造函数：
+调用表达式：
+　类名（[创建传参列表]）
+作用：
+　创建这个类的实例对象，并返回实例对象的引用关系
+说明：
+　实例有自己的作用域和名字空间，可以为该实例添加实例变量（也叫属性）
+示例：
+#constructor.py
+class Dog:
+    '''此语句用来定义一个新的类型　Dog'''
+    pass
+dog1=Dog()#创建一个实例对象
+print(id(dog1))
+dog2=Dog()#创建第二个实例对象
+print(id(dog2))
+
+lst1=list()#创建一个列表对象
+print(id(lst1))
+lst2=list()#创建第二个列表对象
+print(id(lst2))
+---------------------------------------------------
+实例方法（instance method）
+定义语法：
+class 类名(继承列表):
+    def 实例方法名(self,形参列表)
+        '''方法的文档字符串'''
+        语句块
+
+作用：
+用于描述一个对象的行为，让此类型的全部对象都有相同的行为
+说明：
+１．实例方法的实质是函数，是定义在类内的函数
+２．实例方法至少有一个形参，第一个形参绑定调用这个方法的实例，一般命名为'self'
+
+实例方法的调用语法：
+　实例.实例方法名(调用实参)
+　或
+　类名.实例方法名(实例，调用实参)
+
+示例：
+----------------------------------------------------
+#instance_method.py
+#此示例用于示意为Dog类添加　吃，睡，玩等实例方法，以实现Dog类对象的相应行为
+class Dog:
+    '''这是一种可爱的小动物'''
+    def eat(self,food):
+        '''此方法用来描述小狗吃的行为'''
+        print('id为%d的' % id(self),end='')
+        print('小狗正在吃',food,sep='')
+    def sleep(self,hour):
+        print('id为%d的小狗睡了%d小时' % (id(self),hour))
+    def play(self,obj):
+        print('id为%d的小狗玩%s' % (id(self),obj))
+        # return 10 #方法内可以用return返回一个引用
+dog1=Dog()
+dog1.eat('骨头')
+dog2=Dog()
+dog2.eat('狗粮')
+dog1.sleep(1)
+dog2.sleep(2)
+dog1.play('球')
+dog2.play('飞盘')
+Dog.play(dog2,'飞盘')#借助类调用方法：当成一个函数来用
+---------------------------------------------------------
+实例属性：instance attribute
+ 每个实例都可以有自己的变量，称为实例变量（也叫属性）
+使用方法：
+　实例.属性名
+赋值规则：
+　首次赋值则创建此属性
+　再次赋值则改变此属性的绑定关系
+作用：
+　记录每个对象自身的数据
+示例：
+-----------------------------------------------------
+#instance_attribute.py
+#此示例示意创建和使用实例属性
+class Dog:
+    '''这是一种可爱的小动物'''
+    def eat(self,food):
+        '''此方法用来描述小狗吃的行为'''
+        print(self.color,'的',self.kinds,'正在吃',food,sep='')
+    #以下让当前的小狗自己记住吃的是什么
+        self.last_food = food
+    def show_info(self):
+        '''显示信息'''
+        print(self.color,'的',self.kinds,'上次吃的是',self.last_food,sep='')
+
+dog1=Dog()
+dog1.kinds='哈士奇'#创建属性
+dog1.color='黑白相间'#创建属性color
+dog1.color='白色'#修改属性color
+print(dog1.color,'的',dog1.kinds,sep='')
+dog1.eat('骨头')
+
+dog2=Dog()
+dog2.kinds='藏獒'
+dog2.color='棕色'
+dog2.eat('狗粮')
+dog1.show_info()
+------------------------------------------------------------
+练习：
+定义一个'人'类
+class Human:
+    def set_info(self,name,age,adress='不详'):
+        '''此方法用来人对象添加"姓名","年龄","家庭住址"属性'''
+        ............
+    def show_info(self):
+        '''显示此人的信息'''
+        .............
+调用方法如下：
+s1=Human()
+s1.set_info('小张',20,'深圳市南山区')
+s2=set_info('小李',18)
+s1.show_info()#小张 20 岁，家庭住址:深圳
+s2.show_info()#小李 18 岁，家庭住址:不详
+-----------------------------------------------------------------
+class Human:
+    def set_info(self,name,age,adress='不详'):
+        '''此方法用来人对象添加"姓名","年龄","家庭住址"属性'''
+        self.name=name
+        self.age=age
+        self.adress=adress
+    def show_info(self):
+        '''显示此人的信息'''
+        print(self.name,self.age,'家庭住址:',self.adress)
+s1=Human()
+s2=Human()
+s1.set_info('小张',20,'深圳市南山区')
+s2.set_info('小李',18)
+s1.show_info()#小张 20 岁，家庭住址:深圳
+s2.show_info()#小李 18 岁，家庭住址:不详
+--------------------------------------------------------------------
+del 语句用于删除示例属性
+语法：
+del 对象.实例变量
+
+del 语句小结：
+1.删除变量：
+  del a,b,c 
+2.删除列表中的元素:
+  del L[0]
+3.删除字典中的键值对:
+  del d['score']
+4.删除对象属性:
+  del obj.attribute
+-------------------------------------------
+初始化方法：
+作用：
+　对新创建的对象添加属性
+格式：
+ class 类名(继承列表):
+    def __init__(self,形参列表):
+        语句块
+说明：
+　1.初始化方法必须为'__init__'不可改变
+　2.初始化方法会在构造函数创建实例后自动调用，且将实例自身通过第一个参数self传入'__init__'方法
+　3.构造函数的实参将能通过__init__方法的形参列表传入到'__init__'方法中
+　4.初始化方法必须返回None
+示例：
+----------------------------------
+#__init__method.py
+#此示例示意初始化方法的定义及自动调用
+class Car:
+    def __init__(self,c,b,m):
+        self.color=c#颜色
+        self.brand=b#品牌
+        self.model=m#型号
+        print('初始化方法被调用')
+    def run(self,speed):
+        print(self.color,'的',self.brand,self.model,'正在以',speed,'公里/小时的速度行驶',sep='')
+a4=Car('银色','BYD','秦Pro')
+a4.run(199)
+-----------------------------------
+练习：
+写一个学生类Student，此类用于描述学生信息
+学生信息有：
+姓名，年龄，成绩(默认为0)
+1.为该类添加初始化方法，实现在创建对象时自动设置姓名，年龄，成绩属性
+2.添加set_score方法，能为对象修改成绩信息
+3.添加show_info方法打印学生信息
+如：
+class Student:
+    def __init__(self,name,age,score):
+        ...
+    def set_score(self,score):
+        ...
+    def show_info(self):
+        ...
+L=[]
+L.append(Student('小张',20,100))
+L.append(Student('小李',18))
+L.append(Student('小赵',19,85))
+for s in L:
+    s.show_info()
+L[1].set_score(70)
+-----------------------------------------------------
+class Student:
+    def __init__(self,name,age,score=''):
+        self.name=name
+        self.age=age
+        self.score=score
+    def set_score(self,score_new):
+        self.score=score_new
+    def show_info(self):
+        print(self.name,self.age,'岁','成绩为',self.score,sep='')
+L=[]
+L.append(Student('小张',20,100))
+L.append(Student('小李',18))
+L.append(Student('小赵',19,85))
+for s in L:
+    s.show_info()
+L[1].set_score(70)
+for s in L:
+    s.show_info()
+---------------------------------------------------------
+析构方法：
+class 类名（继承列表）:
+    def __del__(self):
+        ...
+作用：
+　在对象销毁前释放对象占用的资源
+说明：
+　析构方法会在对象销毁前被自动调用
+　python语言建议不要在对象销毁时任何事情，因为销毁的时间难以确定
+示例：
+------------------------------------------------------------
+class Car:
+    def __init__(self,info):
+        self.info=info
+        print('汽车',info,'对象被创建')
+    def __del__(self):
+        '''这是析构方法，形参只有一个self'''
+        print('汽车',self.info,'被销毁')
+c1=Car('BYD E6')
+input('按回车键继续执行程序：')
+print('程序正常退出')
+-------------------------------------------------------------
+预置实例属性（实例变量）
+①__dict__属性
+　此属性绑定一个存储此实例自身变量的字典
+示例：
+---------------------------------------------------------------
+class Dog:
+    pass
+dog1=Dog()
+print(dog1.__dict__)#{}
+dog1.kinds='京巴'
+print(dog1.__dict__)#{'kinds':'京巴'}
+-----------------------------------------------------------------
+②__class__属性
+　此属性绑定创建此实例的类
+作用：
+　可以借助于此属性来访问创建此实例的类
+示例：
+class Dog:
+    pass
+dog1=Dog()
+print(dog1.__class__)# <class '__main__.Dog'>
+dog2=dog1.__class__()
+print(dog2.__class__)# <class '__main__.Dog'>
+-------------------------------------------------------------------
+面向对象综合练习：
+两个人：
+１．姓名：张三，年龄：35
+２．姓名：李四，年龄：8
+行为：
+教别人学东西teach
+赚钱work
+借钱borrow
+显示自己的信息show_info
+事情：
+张三　教　李四学python
+李四　教　张三学王者荣耀
+张三上班　赚了　1000元钱
+李四向张三　借了　200元
+
+35岁的张三有钱800元，他学会的技能是:王者荣耀
+8岁的李四有钱200元，它学会的技能是:python 
+-----------------------------------
+class Human:
+    def __init__(self,name,age):
+        self.name=name
+        self.age=age
+        self.money=0
+        self.skill=[]
+
+    def teach(self,other,skill):
+        print(self.name,'教',other.name,skill,sep='')
+        other.skill.append(skill)
+        
+    def work(self,money):
+        print(self.name,'赚了',money,'元钱',sep='')
+        self.money+=money
+
+    def borrow(self,other,money):
+        print(self.name,'向',other.name,'借了',money,'钱',sep='')
+        self.money+=money
+        other.money-=money
+
+    def show_info(self):
+        print(self.name,'有钱',self.money,'元,','他学会的技能是：',self.skill[0],sep='')
+zhang3=Human('张三',35)
+li4=Human('李四',8)
+zhang3.teach(li4,'python')
+li4.teach(zhang3,'王者荣耀')
+zhang3.work(1000)
+li4.borrow(zhang3,200)
+zhang3.show_info()
+li4.show_info()
+-----------------------------------------------------------
+用于类的函数：
+isinstance(obj,class_or_tuple)返回对象
+obj是否是某个类的对象或者某些类的对象或者某些类的一个类的对象，如果是返回True，否则返回False
+type(obj)返回对象的类型
+示例：
+isinstance(100,int)#True 
+isinstance(3.14,int)#False 
+class Dog:
+    pass
+dog1=Dog()
+isinstance(dog1,Dog)#True
+type(dog1) is Dog #False 
+-----------------------------------------------------
+-----------------------------------------------------
+
+练习：修改原学生管理项目：
+添加两个功能：
+９从文件中读取数据（si.txt）
+10保存信息到文件（si.txt）
+
+

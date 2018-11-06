@@ -1,0 +1,304 @@
+
+**************************************
+Day02笔记
+1、数据类型
+  1、数值类型
+  2、字符类型
+  3、枚举类型
+    1.单选:enum(值1,值2,值3...)只能输入给定的值，输入其他的值插不进去
+    2.多选:set(值1,值2,值3...)
+    eg:
+      sex enum('boy','girl','secret')---------------------------->insert into 表名(sex) values('boy')只能插入限定值           
+      likes set('study','gamble','tv')--------------------------->insert into 表名(likes)) values('gamble,tv')只能插入限定值,可多选
+
+  4、日期时间类型
+    1、date ："YYYY-MM-DD"
+    2、datetime ："YYYY-MM-DD HH:MM:SS"
+    3、timestamp ："YYYY-MM-DD HH:MM:SS"
+    4、time ："HH:MM:SS"
+    5、注意
+      datetime ：插入记录的时候不给值默认返回 NULL
+      timestamp ：插入记录的时候不给值默认返回系统当前时间
+    6、示例
+      1、创建一张表,用户充值表
+        create table t2(
+	    id int,
+	    username varchar(20),
+	    password varchar(20),
+	    money int,
+	    birthday date,
+	    cztime timestamp
+	    )character set utf8;
+      2、插入记录
+        insert into t2 values
+        (1,"用户1","123456",500,"1995-05-20","2018-08-30 09:40:30");
+        
+	    insert into t2 values
+	    (2,"用户2","123456",600,"1992-02-20",now());
+2、日期时间函数
+  1、now() 返回服务器当前时间,年月日时分秒
+  2、curdate() 当前日期，年月日
+　   curtime() 当前时间，时分秒
+  3、date("1999-09-09 09:09:09") 提取 年月日
+  4、time("...") 提取 时分秒
+  5、year("...") 提取 年
+  6、练习
+    1、查找2018年8月30日用户充值的详细信息
+      select * from t2 where date(cztime)="2018-08-30";
+    2、查找2018年8月份所有用户充值的信息
+      select * from t2 where
+      date(cztime)>="2018-07-01" and date(cztime)<="2018-07-31";
+    3、查找2018年08月30日 08:00-10:00之间用户充值信息
+      select * from t2 where
+      cztime>="2018-08-30 08:00:00" and cztime<="2018-08-30 10:00:00";
+3、日期时间运算
+  1、语法格式
+    select * from 表名
+    where 字段名 运算符(now()-interval 时间间隔单位);
+    时间间隔单位：
+      2 day | 3 hour | 1 minute | 2 year | 3 month
+  2、示例
+    1、查询1天以内的充值记录
+      select * from t2 where
+      cztime>=(now()-interval 1 day);
+    2、查询1年以前的充值记录
+      select * from t2 where
+      cztime<(now()-interval 1 year);
+    3、查询1天以前、3天以内的充值记录
+      select * from t2 where
+      cztime>=(now()-interval 3 day) and
+      cztime<=(now()-interval 1 day);
+4、表字段操作
+  1、语法 ：alter table 表名 ...;
+  2、添加字段(add)
+    alter table 表名 add 字段名 数据类型;
+    alter table 表名 add 字段名 数据类型 first;
+    alter table 表名 add 字段名 数据类型 after 字段名;
+  3、删除字段(drop)
+    alter table 表名 drop 字段名;
+  4、修改字段数据类型(modify)
+    alter table 表名 modify 字段名 新数据类型;
+    ## 会受到表中已有数据的限制
+  5、修改表名(rename)
+    alter table 表名 rename 新表名;
+  6、修改字段名(change)
+    alter table 表名 change 原字段名 新字段名 数据类型;
+    alter table new_t3 change name username char(15);
+  7、练习
+    1、在 studb2 库中创建表 t1 ,字段有3个：
+      name、age、phnumber
+      use db2;
+      create table stutab(
+      name char(20),
+      age tinyint,
+      phnumber bigint
+      );
+    2、在表中第一列添加一个 id 字段
+      alter table studab add id int first;
+    3、把 phnumber 的数据类型改为 char(11)
+      alter table studab modify phnumber char(11);
+    4、在表中最后一列添加一个字段 address
+      alter table studab add address varchar(30);
+    5、删除表中的 age 字段
+      alter table stutab drop age;
+5、表记录操作
+  1、删除表记录(delete)
+    1、delete from 表名 where 条件;
+    2、注意
+      一定要加where条件,不加where条件全部删除表记录
+  2、更新表记录(update)
+    1、update 表名 set 字段1=值1,字段2=值2 where 条件;
+    2、注意
+      一定要加where条件,不加where条件全部更新表记录
+６、运算符操作
+  1.数值比较＆＆字符比较＆＆逻辑比较
+  　>数值比较：= != > >= < <=
+  　>字符比较：= !=
+  　>逻辑比较：and、or、between 值1 and 值2（值１和值２都必须是数值类型）
+    eg:
+          where id between 100 and 200
+          (想当于where id>=100 and id<=200)
+  2.范围内比较
+    >where 字段名 in (值1,值2,...)
+    >where 字段名 not in (值1,值2,...)
+  3.匹配空、非空
+    >where name is NULL
+    >where name is not NULL
+  4.注意：
+    1.NULL:空值，只能用is、is not 去匹配；
+    2.' ' :空字符串，用=、!=去匹配；
+  5.模糊查询(like)
+    1.where 字段名　like 表达式
+    2.表达式：
+      %:匹配0到多个字符
+      _:匹配一个字符
+      eg:
+        select name from sanguo where name like '_%_'; (搜索名字至少有2个字符)
+        show tables like '%san%';
+7.SQL查询
+  1.总结：(命令先后执行顺序按照下列序号排列)
+    ③select ... 聚合函数　from 表名
+    ①where ...
+    ②group by...
+    ④having...
+    ⑤order by ...
+    ⑥limit ...
+  2.order by:给查询的结果进行排序
+    ... order by 字段名 ASC(升续)/DESC(降续)
+    eg:
+      select * from sanguo order by fangyu DESC;
+      select * from sanguo where country in ('蜀国','魏国')  and name like '___' order by fangyu;
+  3.limit(永远放在SQL语句的最后写)
+    ①limit n     :显示n条记录;
+    ②limit　m,n　 :从第m+1条记录开始显示n条记录---->limit 2,3 :显示3、4、5三条记录
+    eg:
+      select * from sanguo where country ='蜀国' and name is not NULL order by gongji DESC limit 0,3;
+    ③分页
+      每页显示5(m)条记录，显示第4(n)页的记录
+      limit 15,5
+      limit (n-1)*m,m
+  4.聚合函数:
+    ①.分类:
+      avg(字段):平均值
+      max(字段):最大值
+      min(字段):最小值
+      sum(字段):求和
+      count(字段):统计该字段记录的条数
+    ②eg: 
+      select max(gongji) from sanguo;
+      select count(id),count(name) from sanguo;
+      select count(*) from sanguo where gongji > 200 and country='蜀国';
+  5.用分组group by 配合　聚合函数使用：给查询的结果进行分组(先分组后聚合)
+    ①eg:
+      select country,avg(gongji) from sanguo group by country;
+      +---------+-------------+
+      | country | avg(gongji) |
+      +---------+-------------+
+      | 吴国     |    100.0000 |
+      | 蜀国     |    578.2500 |
+      | 魏国     |    328.3333 |
+      +---------+-------------+
+      select country,count(*) from sanguo where sex='男' group by country order by count(*) DESC limit 0,2;
+    ②注意：
+      1.group by后字段名必须要为select后的字段
+      2.如果查询字段和group by后字段不一致，则必须要对该字段进行聚合处理（聚合函数）
+  6.having ...:对分组聚合后的结果进行进一步的筛选
+    ①eg:
+      select avg(gongji),country from sanguo group by country having avg(gongji)>105 order by avg(gongji) DESC limit 2;
+    ②注意：
+      1.having语句通常与group by语句联合使用
+      2.having语句的存在弥补了where关键字不能与聚合函数联合使用的不足，where只能操作表中实际存在的字段，having操作的是聚合函数生成的显示列
+      
+MySQL-Day02作业：
+
+1、把今天所有的课堂练习重新做一遍
+2、面试题
+有一张文章评论表comment如下
+comment_id	article_id	user_id	    date
+   1	      10000	      10000	   2018-01-30 09:00:00
+   2	      10001	      10001	   ... ...
+   3	      10002	      10000	   ... ...
+   4	      10003	      10015	   ... ...
+   5	      10004	      10006	   ... ...
+   6	      10025	      10006	   ... ...
+   7	      10009	      10000	   ... ...
+以上是一个应用的comment表格的一部分，请使用SQL语句找出在本站发表的所有评论数量最多的10位用户及评论数，并按评论数从高到低排序
+备注：comment_id为评论id
+      article_id为被评论文章的id
+      user_id 指用户id
+-------------------------------------------------------------------------
+mysql> select count(*),user_id from comment group by user_id order by count(*) DESC limit 10;
++----------+---------+
+| count(*) | user_id |
++----------+---------+
+|        3 |   10000 |
+|        2 |   10006 |
+|        1 |   10001 |
+|        1 |   10015 |
++----------+---------+
+----------------------------------------------------------------------------------------------------
+      
+              
+      
+                   
+      
+
+         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+网址 ：http://code.tarena.com.cn
+路径 ：/AIDCode/aid1807/AID1807/03_MySQL/
+文件名 ：AID1807-MysqlFiles.rar
+解压后 -> day02 -> 
+先复制 1-... 中sql
+再复制 2-... 中sql
+验证 ：
+mysql> use MOSHOU;
+mysql> show tables;
+mysql> select * from hero;
+mysql> select * from sanguo;
+
+
+
+
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

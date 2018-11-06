@@ -1,0 +1,250 @@
+一、锁(MySQL自动加锁和释放锁)
+  1、目的 ：解决客户端并发访问的冲突问题
+  2、锁分类
+    1、锁类型 
+      1、读锁(共享锁)
+         查询(select):加读锁之后,别人不能更改表记录,但可以进行查询
+      2、写锁(互斥锁、排他锁)
+         更新(update):加写锁之后别人不能查、不能改
+    2、锁粒度
+      1、行级锁 ：Innodb
+         select ：加读锁,锁1行
+	     update ：加写锁,锁1行
+      2、表级锁 ：MyISAM
+         select ：加读锁,锁1张表
+	     update ：加写锁,锁1张表
+
+二、存储引擎:只是针对于表而言(engine：处理表的处理器)
+  1、基本操作命令
+    1、查看所有存储引擎
+      show engines;
+    2、查看已有表的存储引擎
+      show create table 表名;
+    3、创建表指定存储引擎
+      create table 表名(...)engine=myisam,charset=utf8;
+    4、已有表中指定存储引擎
+      alter table 表名 engine=myisam;
+  2、常用存储引擎的特点
+    1、InnoDB特点
+      1、支持事务、外键、行级锁
+      2、共享表空间(/var/lib/mysql/库名/.)
+         表名.frm ：表结构和索引信息  
+	       表名.ibd : 表记录
+    2、MyISAM特点
+      1、支持表级锁
+      2、独享表空间
+         表名.frm ：表结构
+	       表名.MYD ：表记录
+	       表名.MYI ：索引信息
+    3、Memory存储引擎
+      1、表结构存储在硬盘，表记录存储在内存
+      2、数据存储在内存中,速度快
+      3、服务器重启、MySQL服务重启后表记录消失
+  3、如何决定使用哪个存储引擎
+    1、执行查询操作多的表使用MyISAM(使用InnoDB浪费资源)
+    2、写操作多的表使用InnoDB
+
+三、数据备份(mysqldump,在Linux终端操作)分为　完全备份（开发）　和　增量备份（运维）
+  1、命令格式
+    mysqldump -u用户名 -p 源库名 > ***.sql
+  2、源库名的表示方式
+    --all-databases    　  备份所有库
+    库名                　　备份1个库
+    -B 库1 库2 库3      　  备份多个库
+    库名 表1 表2 表3    　 　备份多张表
+  3、示例：
+    1.备份所有库，放到当前目录下(先cd到当前文件夹)
+    mysqldump -uroot -p --all-databases > all.sql
+    2.备份MOSHOU库中sheng、city、xian三张表到scx.sql
+    mysqldump -uroot -p MOSHOU sheng city xian > scx.sql
+    3.备份两个自建库
+    mysqldump -uroot -p -B MOSHOU indexdb > self.sql
+    4.备份MOSHOU库
+    mysqldump -uroot -p MOSHOU > MOSHOU.sql 
+
+四、数据恢复
+  1、命令格式(Linux终端)
+    mysql -u用户名 -p 目标库名 < ***.sql
+  2、从所有库备份All.sql中恢复某一个库
+    mysql -u用户名 -p --one-database 库名 < All.sql
+    mysql -uroot -p --one-database db4 < All.sql
+  3、示例
+    1、在db4.sheng添加一条记录
+      insert into sheng values(null,300000,"黑龙江");
+    2、在db4库,新建一张表t888,插入一条记录
+      create table t888(id int);
+      insert into t888 values (1),(2),(3);
+    3、从 db4.sql 恢复db4库
+      mysql -uroot -p db4 < db4.sql
+    注意 ：
+      1、恢复库时,如果恢复到原库会将表中数据覆盖,新增表不会删除
+      2、恢复库时,如果库不存在,则必须先创建空库
+
+五、数据导入
+  1、作用 ：把文件系统中内容导入到数据库中
+  2、语法格式（在mysql>命令行里面写）
+    load data infile "文件名"
+    into table 表名
+    fields terminated by "分隔符"
+    lines terminated by "\n";
+  3、导入步骤----将socretable.csv导入到数据库中
+    1、在数据库中创建对应的表
+      create table score(
+      id int,
+      name varchar(15),
+      score float(5,2),
+      phnumber char(11),
+      class char(7)
+      )character set utf8;
+    2、把文件拷贝到数据库的搜索路径中
+      1、查看搜索路径（mysql>下输入）
+        show variables like "secure_file_priv";
+	      ## /var/lib/mysql-files
+      2、拷贝文件(在终端输入)
+        sudo cp  ~/桌面/aid1808/scoretable.csv  /var/lib/mysql-files/
+      3、Mac本配置搜索路径：
+        sudo -i
+        vi my.cnf
+          [mysqld]
+          secure_file_priv="/usr/local/mysql/data/"
+        系统偏好设置 - 小海豚 - stop - start
+        mysql>show variables like "secure_file_priv";
+    3、执行数据导入
+        load data infile "/var/lib/mysql-files/scoretable.csv"
+        into table score
+        fields terminated by ","
+        lines terminated by "\n";
+
+***************************************文件权限*************************************************：
+-rwx　r--　r-- 1 root root 1719 10月 10 14:38 scoretable.csv
+　①  ②  　③　　　①    ② 　　
+第①组权限：所有者权限 tarena(root)
+第②组权限：所属组(同组用户)权限 tarena2(root)
+第③组权限：其他用户权限 mysql
+***************************************修改文件权限**********************************************
+r:4
+w:2
+x:1
+chmod 777 文件名
+chmod 666 文件名 rw-rw-rw-
+chmod 644 文件名 rw-r--r--(通常使用)
+************************************************************************************************
+
+
+六、数据导出
+  1、把数据库表的记录导出到系统文件里
+  2、语法格式
+    select ... from 表名
+    into outfile "文件名"
+    fileds terminated by "分隔符"
+    lines terminated by "\n";
+  3、练习
+    1、把MOSHOU库下的sanguo表中,英雄的姓名、攻击值和国家给导出来,sanguo.csv
+      1、查看搜索路径
+        show variables like "%secure%";
+      2、执行数据导出语句
+        select name,gongji,country from MOSHOU.sanguo
+	      into outfile "/var/lib/mysql-files/sanguo.csv"
+	      fields terminated by ","
+	      lines terminated by "\n";
+
+
+    2、把 mysql 库下的user表中 user、host的值导出到系统文件 user.txt
+        select user,host from mysql.user
+        into outfile "/var/lib/mysql-files/user.txt"
+        fields terminated by "   "
+        lines terminated by "\n";
+
+七、E-R模型(Entry-Relationship)
+  1、定义：实体-关系模型，数据模型，用于设计数据库
+  2、三个概念：
+    1、实体：描述客观事物的一个概念
+      1、表示方式：矩形框
+      2、示例：一个人、一本书、一杯咖啡
+    2、属性：实体具有的特性
+      1、表示方式：椭圆形
+    3、关系：各个实体之间的联系
+      1、分类：
+        ①一对一(1:1):A:B
+　　　　　A中的1个实体在B中只能有1个与其关联
+　　　　　B中的1个实体在A中只能有1个与其关联
+        ②一对多(1:n)：A:B
+　　　　　B中的1个实体在A中只能有1个与其关联
+　　　　　A中的1个实体在B中有n个与其关联
+        ③多对多(m:n)：A:B
+　　　　　A中的一个实体在B中有多个关联
+　　　　　B中的一个实体在A中有多个关联
+      2、表示方式：菱形框
+  3、ER图绘制：
+    1、矩形框代表实体，菱形框代表关系，椭圆形框代表属性
+    2、示例(老师与课题):
+      老师：工号、姓名、职称
+      课题：课题号、课题名称
+      关系：m:m 
+    3、数据库三范式：
+      ①第一范式（1NF）：列不可拆分
+      ②第二范式（2NF）：唯一标识
+      ③第三范式（3NF:引用主键
+      说明：后一个范式，都是在前一个范式的基础之上建立的
+
+八、MySQL用户账户管理
+  1、开启MySQL远程连接(改配置文件)
+    1、sudo -i
+    2、cd /etc/mysql/mysql.conf.d/
+    3、cp mysqld.cnf mysqld.cnf.bak2
+    4、subl mysqld.cnf
+      #bind-address=127.0.0.1
+      把前面 # 去掉,保存退出
+      vi mysqld.cnf
+      按a -> 改内容 -> 按ESC -> 按 shift + : -> wq
+    5、/etc/init.d/mysql restart
+  2、用root用户添加授权用户
+    1、用root用户登录mysql
+      mysql -uroot -p123456
+    2、授权
+      grant 权限列表 on 库名.表名 
+      to "用户名"@"%" identified by "密码"
+      with grant option;
+      权限列表 ：all privileges、select、update、drop
+      库名.表名 ：db4.* 、*.*(所有库的所有表)
+    3、示例
+      1、添加授权用户tiger,密码123,对所有库的所有表有所有权限,可从任何IP去连接
+        grant all privileges on *.* 
+        to "tiger"@"%"
+        identified by "123"
+        with grant option;
+      2、添加授权用户rabbit,密码123,对db4库所有表只有查询权限,可从任何IP去连接
+        grant select on db4.* 
+        to "rabbit"@"%" identified by "123"
+        with grant option;
+作业：
+  1、/etc/passwd 导入到数据库表中
+     tarena:x:1000:1000:tarena,,,:/home/tarena:/bin/bash
+     用户名　密码　uid gid 用户描述　　主目录　　　　　登录权限
+    1、创建对应的表
+      create table userinfo(
+      username varchar(20),
+      password char(1),
+      uid int,
+      gid int,
+      comment varchar(50),
+      homedir varchar(50),
+      shell varchar(50)
+      );
+    2、复制文件到 /var/lib/mysql-files/
+      sudo cp /etc/passwd /var/lib/mysql-files/
+    3、输入导入语句
+      load data infile "/var/lib/mysql-files/passwd"
+      into table db4.userinfo
+      fields terminated by ":"
+      lines terminated by "\n";
+
+
+  2、在userinfo表中第一列添加id字段,主键、自增长、显示宽度为3,位数不够用0填充
+    alter table userinfo add 
+    id int(3) zerofill primary key auto_increment first;
+
+
+
+
+  

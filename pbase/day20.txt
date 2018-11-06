@@ -1,0 +1,591 @@
+￥day19回顾
+￥　issubclass(cls,类或元祖)　判断类的父子关系
+￥面向对象编程语言的特征
+￥　封装（以类为单位，在类内添加私有（类及类的实例）变量和方法，以双下划线开头的标识符）
+￥　继承／派生
+￥　多态
+￥多继承（支持多继承语言C++/Python）
+￥  方法名冲突
+￥  __mro__ 类属性
+￥函数重写
+￥　让自定义的类添加相应的方法，让此类的对象能够使用内建函数进行操作
+￥
+￥day20.笔记
+￥对象的属性管理函数
+￥＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+￥函数 	                       　||说明：
+￥getattr(obj, name[, default]) 	||从一个对象得到对象的属性；getattr(x, 'y') 等同于x.y; 当属性不存在时,如果
+￥                                ||给出default参数,则返回default,如果没有给出default 则产生一个AttributeError错误
+￥＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+￥hasattr(obj, name) 	            ||用给定的name返回对象obj是否有此属性,此种做法可以避免在getattr(obj, name)
+￥                                ||时引发错误
+￥＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+￥setattr(obj, name, value) 	    ||给对象obj的名为name的属性设置相应的值value, set(x, 'y', v) 等同于 x.y = v
+￥＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+￥delattr(obj, name) 	            ||删除对象obj中的name属性, delattr(x, 'y') 等同于 del x.y
+￥＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+￥对象的属性管理函数示例:
+￥
+￥class Dog:
+￥    pass
+￥d = Dog()
+￥d.color = '白色'
+￥v = getattr(d, 'color')   # 等同于 v = d.color
+￥v = getattr(d, 'kinds')  # 出错,没有d.kinds属性
+￥v = getattr(d, 'kinds', '没有这个属性')  # v= '没有这个属性'
+￥hasattr(d, 'color')  # True
+￥hasattr(d, 'kinds')  # False
+￥setattr(d, 'kinds', '京巴')  # 等同于d.kinds ='京巴'
+￥hasattr(d, 'kinds')  # True
+￥delattr(d, 'kinds')  # 等同于 del d.kinds
+￥hasattr(d, 'kinds')  # False
+￥---------------------------------------------------------------------------------------------------------
+￥异常（高级）
+￥异常相关的语句:
+￥        try-except
+￥        try-finally
+￥        raise 触发异常，发生错误通知
+￥        assert 根据条件触发AssertionError类型的错误通知
+￥        with 语句
+￥
+￥with语句
+￥
+￥        语法:
+￥            with 表达式1[as 变量1], 表达式2 [as 变量2], ...:
+￥                语句块
+￥        作用:
+￥            使用于对资源进行访问的场合，确保使用过程中不管是否发生异常，都会执行必须的'清理'操作，并释放资源
+￥            如: 文件使用后自动关闭，线程中锁的自动获取和释放等
+￥        说明:
+￥            执行表达式用as子句中的变量绑定生成的对象
+￥            with 语句并不改变异常的的状态
+￥
+￥---------------------
+￥# with.py
+￥--------------------------------------------------------
+￥# 第一种方式用try-finally保证文件一定能够正常关闭
+￥try:
+￥    f = open("../../day19/day19.txt")
+￥    try:
+￥        for l in f:
+￥            x = int('aaaa')  # 出现异常
+￥            print(l)
+￥    finally:
+￥        f.close()
+￥        print("文件已经关闭")
+￥except OSError:
+￥    print("打开文件失败")
+￥----------------------------------------------------------
+￥# 第二种方式用with语句保证文件一定能够正常关闭
+￥try:
+￥    with open("../../day19/day19.txt") as f:
+￥        for l in f:
+￥            x = int('aaaa')  # 当进入异常流程时,打开的文件也能被关闭
+￥            print(l)
+￥except OSError:
+￥    print("打开文件失败")
+￥-----------------------------------------------------------
+￥环境管理器：
+￥　1.类内有__enter__和__exit__实例方法的类创建的实例被称为环境管理器
+￥　2.能够用with进行管理的对象必须是环境管理器
+￥　3.__enter__方法在进去with语句时被调用，且返回由as变量管理的对象
+￥　4.__exit__方法将在离开with语句时被调用，且可以用形参来判断离开with语句的状态
+￥示例：
+￥-------------------------------------------------------------------------
+￥#context.py
+￥#此示例示意自定义用with管理的对象
+￥# 此示例示意自定义的对象加入__enter__ 和 __exit__ 方法,让A类的对象能够使用with使用语句
+￥class A:
+￥    '''此类的对象可以用于with语句进行管理'''
+￥    def __enter__(self):
+￥        print("此方法是在with语句内执行的")
+￥        return self  # self将 被 with 中的as 变量绑定
+￥    def __exit__(self, exc_type, exc_val, exc_tb):
+￥        '''exc_type 用来绑定错误类型,当没有异常发生时绑定None\n
+￥           exc_val 用来绑定错误对象,当没有发生异常时绑定None\n
+￥           exc_tb 用来绑定TraceBack对象,当没有异常时绑定None\n
+￥        '''
+￥        if exc_type is None:
+￥            print("您已离开with语句,离开时没有发生任何异常")
+￥        else:
+￥            print("您已离开with语句")
+￥            print("错误类型是:", exc_type)
+￥            print("错误对象是:", exc_val)
+￥            print('Traceback:', exc_tb)
+￥with A() as a:
+￥    print("这是with语句内部的输出")
+￥    int(input("请输入整数: "))
+￥print("程序正常结束")
+￥----------------------------------------------------------------------------------
+￥运算符重载
+￥
+￥    什么是运算符重载:
+￥        让自定义的类生成的对象(实例)能够use运算符进行操作
+￥        作用:
+￥            让自定义类的实例像内建对象一样进行运算符操作
+￥            让程序简洁易读
+￥            对自定义的对象将运算符赋予新的运算规则
+￥        说明:
+￥            运算符重载方法的参数已经有固定的含义，不建议改变原有的意义
+￥
+￥    算术运算重载
+￥
+￥    方法名                 运算符和表达式    说明
+￥    __add__(self,rhs)        self + rhs      加法
+￥    __sub__(self,rhs)        self - rhs      减法
+￥    __mul__(self,rhs)        self * rhs      乘法
+￥    __truediv__(self,rhs)    self / rhs      除法
+￥    __floordiv__(self,rhs)   self // rhs     地板法
+￥    __mod__(self,rhs)        self % rhs      求余(取模)
+￥    __pow__(self,rhs)        self ** rhs     幂运算
+￥
+￥rhs (right hands side)
+￥示例：
+￥----------------------------------------------------------------------------------
+￥# mynumer.py
+￥# 此示例示意算术运算符的重载方法
+￥class MyNumber:
+￥    def __init__(self, v):
+￥        self.data = v  # self.data 用来保存对象的数据
+￥
+￥    def __repr__(self):
+￥        return "MyNumber(%d)" % self.data
+￥
+￥    def __add__(self, other):
+￥        '''此方法来用制定self + other的规则'''
+￥        v = self.data + other.data
+￥        return MyNumber(v)  # 用v创建一个新的对象返回给调用者
+￥
+￥    def __sub__(self, rhs):
+￥        return MyNumber(self.data - rhs.data)
+￥n1 = MyNumber(100)
+￥n2 = MyNumber(200)
+￥# n3 = n1.__add__(n2)
+￥n3 = n1 + n2  # 等同于 n3 = n1.__add__(n2)
+￥print(n3)  # MyNumber(300)
+￥n4 = n3 - n2  # 等同于 n4 = n3.__sub__(n2)
+￥print('n4 = ', n4)  # n4 =  MyNumber(100)
+￥----------------------------------------------------------------------------------
+￥练习:
+￥  实现两个自定义列表的相加
+￥  class MyList:
+￥      def __init__(self, iterable=())
+￥           self.data = list(iterable)
+￥      .... 以下自己实现
+￥
+￥  L1 = MyList([1, 2, 3])
+￥  L2 = MyList([4, 5, 6])
+￥  L3 = L1 + L2
+￥  print(L3)  # MyList([1, 2, 3, 4, 5, 6])
+￥  L4 = L2 + L1
+￥  print(L4)  # MyList([4, 5, 6, 1, 2, 3])
+￥  # 试想能否实现以下操作
+￥  L5 = L1 * 3
+￥  print(L5)  # MyList([1, 2, 3, 1, 2, 3, 1, 2, 3])
+￥  ----------------------------------------------------------------------------------
+￥class MyList:
+￥    def __init__(self,iterable=()):
+￥        self.data=[x for x in iterable]
+￥        self.index=0
+￥    def __repr__(self):
+￥        return 'MyList(%r)' % self.data 
+￥    def append(self,v):
+￥        return self.data.append(v)
+￥    def __len__(self):
+￥        return len(self.data)
+￥    def __iter__(self):
+￥        return MyList(self.data)
+￥    def __next__(self):
+￥        if self.index >=len(self.data):
+￥            raise StopIteration
+￥        r=self.data[self.index]
+￥        self.index+=1
+￥        return r
+￥    def __add__(self, rhs):
+￥        return MyList(self.data + rhs.data)
+￥
+￥    def __mul__(self, rhs):
+￥        '''rhs 为int类型, rhs.data 是不存在的'''
+￥        return MyList(self.data * rhs)
+￥for x in MyList('ABD'):
+￥    print(x)
+￥L1 = MyList([1, 2, 3])
+￥L2 = MyList([4, 5, 6])
+￥L3 = L1 + L2
+￥print(L3)  # MyList([1, 2, 3, 4, 5, 6])
+￥L4 = L2 + L1
+￥print(L4)  # MyList([4, 5, 6, 1, 2, 3])
+￥
+￥# 试想能否实现以下操作
+￥L5 = L1 * 3  # 等同于L5 = L1.__mul__(3)
+￥print(L5)  # MyList([1, 2, 3, 1, 2, 3, 1, 2, 3])
+￥-------------------------------------------------------------------------------------------
+￥反向算术运算符的重载
+￥  当运算符的左侧为内建类型时,右侧为自定义类型进行算术运算符运算时会出现TypeError错误,因无法修改内建类型的代码实现运算符重载,此时需要使用反向算术运算符重载
+￥
+￥反向算术运算符的重载:
+￥    方法名                  运算符和表达式   说明
+￥  __radd__(self, lhs)        lhs + self    加法
+￥  __rsub__(self, lhs)        lhs - self    减法
+￥  __rmul__(self, lhs)        lhs * self    乘法
+￥  __rtruediv__(self, lhs)    lhs / self    除法
+￥  __rfloordiv__(self, lhs)   lhs // self   地板除
+￥  __rmod__(self, lhs)        lhs % self    取模(求余)
+￥  __rpow__(self, lhs)        lhs ** self   幂运算
+￥示例：
+￥------------------------------------------------------------------------------------------------
+￥# mylist1.py
+￥# 此示例示意反向算术运算符的重载
+￥class MyList:
+￥    def __init__(self, iterable=()):
+￥        self.data = list(iterable)
+￥
+￥    def __repr__(self):
+￥        return "MyList(%s)" % self.data
+￥
+￥    def __add__(self, rhs):
+￥        return MyList(self.data + rhs.data)
+￥
+￥    def __mul__(self, rhs):
+￥        '''rhs 为int类型, rhs.data 是不存在的'''
+￥        print("__mul__ 被调用")
+￥        return MyList(self.data * rhs)
+￥
+￥    def __rmul__(self, lhs):
+￥        print("__rmul__被调用")
+￥        return MyList(self.data * lhs)
+￥L1 = MyList([1, 2, 3])
+￥L2 = MyList([4, 5, 6])
+￥L3 = 3 * L1
+￥print(L3)
+￥---------------------------------------------------------------------------------------------
+￥复合赋值算术运算符的重载
+￥  以复合赋值算术运算符 x += y 为例, 此运算符会优先调用 x.__iadd__(y) 方法,
+￥  如果没有__iadd__方法时会将复合赋值运算拆解为: x = x + y 然后调用 x = x.__add__(y) 方法,
+￥  如果再不存在__add__ 方法则会触发TypeError类型的错误异常
+￥
+￥复合算术运算符的重载:
+￥    方法名                  运算符和表达式   说明
+￥  __iadd__(self, rhs)        self += rhs    加法
+￥  __isub__(self, rhs)        self -= rhs    减法
+￥  __imul__(self, rhs)        self *= rhs    乘法
+￥  __itruediv__(self, rhs)    self /= rhs    除法
+￥  __ifloordiv__(self, rhs)   self //= rhs   地板除
+￥  __imod__(self, rhs)        self %= rhs    取模(求余)
+￥  __ipow__(self, rhs)        self **= rhs   幂运算
+￥
+￥比较运算符的重载
+￥    方法名                  运算符和表达式   说明
+￥  __lt__(self, rhs)        self <  rhs   小于
+￥  __le__(self, rhs)        self <= rhs   小于等于
+￥  __gt__(self, rhs)        self >  rhs   大于
+￥  __ge__(self, rhs)        self >= rhs   大于等于
+￥  __eq__(self, rhs)        self == rhs   等于
+￥  __ne__(self, rhs)        self != rhs   不等于
+￥ 注: 比较运算符通常返回布尔值True 或 False
+￥
+￥位相关运算符重载
+￥    方法名                  运算符和表达式   说明
+￥  __and__(self, rhs)        self & rhs   位与
+￥  __or__(self, rhs)         self | rhs   位或
+￥  __xor__(self, rhs)        self ^ rhs   位异或
+￥  __lshift__(self, rhs)     self << rhs  左移
+￥  __rshift__(self, rhs)     self >> rhs  右移
+￥
+￥反向位运算符重载
+￥    方法名                  运算符和表达式   说明
+￥  __rand__(self, lhs)        lhs & self  位与
+￥  __ror__(self, lhs)         lhs | self  位或
+￥  __rxor__(self, lhs)        lhs ^ self  位异或
+￥  __rlshift__(self, lhs)     lhs << self 左移
+￥  __rrshift__(self, lhs)     lhs >> self 右移
+￥
+￥复合赋值位相关运算符重载
+￥    方法名                  运算符和表达式   说明
+￥  __iand__(self, rhs)        self &= rhs   位与
+￥  __ior__(self, rhs)         self |= rhs   位或
+￥  __ixor__(self, rhs)        self ^= rhs   位异或
+￥  __ilshift__(self, rhs)     self <<= rhs  左移
+￥  __irshift__(self, rhs)     self >>= rhs  右移
+￥
+￥一元运算符的重载
+￥  方法名                  运算符和表达式   说明
+￥ __neg__(self)            - self        负号
+￥ __pos__(self)            + self        正号
+￥ __invert__(self)         ~ self        取反
+￥
+￥ 语法:
+￥  class 类名:
+￥      def __xxx__(self):
+￥          ....
+￥  
+￥  示例见:
+￥---------------------------------------------------------------------
+￥# mylist3.py
+￥# 此示例示意一元运算符的重载
+￥class MyList:
+￥    def __init__(self, iterable=()):
+￥        self.data = list(iterable)
+￥
+￥    def __repr__(self):
+￥        return "MyList(%s)" % self.data
+￥
+￥    def __neg__(self):
+￥        G = (-x for x in self.data)
+￥        return MyList(G)
+￥
+￥L1 = MyList([1, -2, 3, -4, 5])
+￥L2 = -L1  # <<---此处会有错误
+￥print(L2)  # MyList([-1, 2, -3, 4, -5])
+￥# L3 = +L1  
+￥---------------------------------------------------------------------
+￥
+￥in / not in 运算符重载
+￥  格式:
+￥    def __contains__(self, e):
+￥        语句
+￥
+￥  注: in / not in 返回布尔值 True/False
+￥    当重载了__contains__后, in 和 not in 运算符都可用.
+￥    not in 运算符的返回值与 in 相反
+￥  示例见:
+￥-------------------------------------------------------------------------
+￥# mylist3.py
+￥# 此示例示意 in / not in 运算符的重载
+￥class MyList:
+￥    def __init__(self, iterable=()):
+￥        self.data = list(iterable)
+￥    def __repr__(self):
+￥        return "MyList(%s)" % self.data
+￥    def __contains__(self, e):
+￥        # print("+++++++++")
+￥        return True if e in self.data else False
+￥        # return e in self.data
+￥L1 = MyList([1, -2, 3, -4, 5])
+￥
+￥if 2 in L1:  # 等同于 if L1.__contains__(2):
+￥    print("2在L1内")
+￥else:
+￥    print('2不在L1内')
+￥
+￥if 4 not in L1:  # 等同于 if not L1.__contains__(4)
+￥    print("4不在L1内")
+￥else:
+￥    print("4在L1内")
+￥--------------------------------------------------------------------------
+￥索引和切片运算符重载方法:
+￥  方法名                   运算符和表达式       说明
+￥ __getitem__(self, i)     x = self[i]    索引/切片取值
+￥ __setitem__(self, i, v)  self[i] = v    索引/切片赋值
+￥ __delitem__(self, i)     del self[i]  del语句删除索引/切片
+￥
+￥作用:
+￥  让自定义的类型的对象能够支持索引和切片操作
+￥--------------------------------------------------------------------------
+￥slice构造函数
+￥    作用:
+￥      用于创建一个slice对象，此对于用于切片操作的传值
+￥    格式:
+￥      slice(start=None, stop=None, step=None)
+￥    slice对象的实例属性:
+￥      start  切片的起始值 默认为None
+￥      stop   切片的终止值 默认为None
+￥      step   切片的步长 默认为None
+￥-----------------------------------------------------------------------------
+￥示例：
+￥class MyList:
+￥    def __init__(self, iterable=()):
+￥        self.__data = list(iterable)
+￥
+￥    def __repr__(self):
+￥        return "MyList(%s)" % self.__data
+￥
+￥    def __getitem__(self, i):
+￥        '索引取值,i绑定[]内的元素'
+￥        print('i的值是:', i)
+￥        return self.__data[i]  # 返回data绑定列表中的第i个元素
+￥
+￥    def __setitem__(self, i, v):
+￥        '''此方法可以让自定义的列表支持索引赋值操作'''
+￥        print("__setitem__被调用, i=", i, 'v=', v)
+￥        self.__data[i] = v
+￥
+￥    def __delitem__(self, i):
+￥        self.__data.pop(i)  # del self.__data[i]
+￥L1 = MyList([1, -2, 3, -4, 5])
+￥x = L1[3]  
+￥print(x)
+￥#i的值是: 3
+￥#-4
+￥L1[3] = 400
+￥print(L1)
+￥#__setitem__被调用, i= 3 v= 400
+￥#MyList([1, -2, 3, 400, 5])
+￥del L1[3]
+￥print(L1)
+￥#MyList([1, -2, 3, 5])
+￥print(L1[::2])
+￥#i的值是: slice(None, None, 2)
+￥#[1, 3]
+￥------------------------------------------------------------------------------
+￥# 此示例示意切片取值操作
+￥class MyList:
+￥    def __init__(self, iterable=()):
+￥        self.__data = list(iterable)
+￥
+￥    def __repr__(self):
+￥        return "MyList(%s)" % self.__data
+￥
+￥    def __getitem__(self, i):
+￥        print('i的值是:', i)
+￥        if type(i) is int:
+￥            print("用户正在用索引取值")
+￥        elif type(i) is slice:
+￥            print("用户正在用切片取值")
+￥            print("切片的起点是:", i.start)
+￥            print("切片的终点是:", i.stop)
+￥            print("切片的步长是:", i.step)
+￥        elif type(i) is str:
+￥            print("用户正在用字符串进行索引操作")
+￥            # raise TypeError(如果没有return 返回错误对象，引发异常)
+￥            return "索引传参错误！"
+￥
+￥        return self.__data[i]  # 返回data绑定列表中的第i个元素
+￥L1 = MyList([1, -2, 3, -4, 5])
+￥print(L1[::2])
+￥#i的值是: slice(None, None, 2)
+￥#用户正在用切片取值
+￥#切片的起点是: None
+￥#切片的终点是: None
+￥#切片的步长是: 2
+￥#[1, 3, 5]
+￥print(L1["ABC"])
+￥#i的值是: ABC
+￥#用户正在用字符串进行索引操作
+￥#索引传参错误！
+￥------------------------------------------------------------------------------
+￥特性属性 @property
+￥    实现其它语言所拥有的 getter 和 setter功能
+￥作用:
+￥    用来模拟一个属性
+￥    通过@property装饰器可以对模拟的属性赋值和取值加以控制
+￥示例：
+￥------------------------------------------------------------------------------
+￥#property.py
+￥#此示例示意用@property来实现getter和setter
+￥class Student:
+￥    def __init__(self,s):
+￥        self.__score=s
+￥    def get_score(self):
+￥        '''getter'''
+￥        return self.__score
+￥    def set_score(self,s):
+￥        '''setter'''
+￥        assert 0<=s<=100,'成绩超出范围'
+￥        self.__score=s
+￥s1=Student(59)
+￥# print(s1.score)#取值
+￥print(s1.get_score())
+￥s1.set_score(99)
+￥# s1.score=99#赋值
+￥------------------------------------------------------------------------------
+￥#property2.py
+￥#此示例示意用@property来实现getter和setter
+￥class Student:
+￥    def __init__(self,s):
+￥        self.__score=s
+￥    @property
+￥    def score(self):
+￥        '''getter'''
+￥        print('调用getter')
+￥        return self.__score
+￥    @score.setter 
+￥    def score(self,s):
+￥        '''setter'''
+￥        print('调用setter')
+￥        assert 0<=s<=100,'成绩超出范围'
+￥        self.__score=s
+￥s1=Student(59)
+￥print(s1.score)#取值，不能加括号print(s1.score())
+￥#调用getter
+￥#59
+￥s1.score=99 #赋值
+￥#调用setter
+￥print(s1.score)
+￥#调用getter
+￥#99
+￥------------------------------------------------------------------------------
+￥练习:
+￥  实现有序集合类OrderSet , 能实现两个集合的交集　＆，　并集 |, 补集-, 对称补集 ^, ==,!=,in / not in 等操作
+￥  要求: 集合的内部用list存储数据
+￥
+￥  s1 = OrderSet([1, 2, 3, 4])
+￥  s2 = OrderSet([3, 4, 5])
+￥  print(s1 & s2)  # OrderSet([3, 4])
+￥  print(s1 | s2)  # OrderSet([1, 2, 3, 4, 5])
+￥  print(s1 ^ s2)  # OrderSet([1, 2, 5])
+￥  if OrderSet([1, 2, 3]) != OrderSet(1, 2, 3, 4):
+￥      print("不相等")
+￥　　else:
+￥      print("相等")
+￥　　if s1 == OrderSet([3, 4, 5]):
+￥     print("s1 == OrderSet([3, 4, 5])")
+￥  if 2 in s1:
+￥      print('2 in s1　返回真')
+￥  ... 以下自己测试
+￥-----------------------------------------------------------------------------------
+￥class OrderSet:
+￥    def __init__(self, it=None):
+￥        if it is None:
+￥            self.data = []
+￥        elif it:
+￥            self.data = [x for x in it]
+￥
+￥    def __repr__(self):
+￥        return "OrderSet(%r)" % self.data
+￥
+￥    def __and__(self, rhs):
+￥        return OrderSet(
+￥            (x for x in self.data if x in rhs.data)
+￥        )
+￥
+￥    def __or__(self, rhs):
+￥        return OrderSet(
+￥            self.data + [x for x in rhs.data
+￥                         if x not in self.data]
+￥        )
+￥
+￥    def __sub__(self, rhs):
+￥        return OrderSet(
+￥            (x for x in self.data if x not in rhs.data)
+￥        )
+￥
+￥    def __xor__(self, rhs):
+￥        return (self - rhs) | (rhs - self)
+￥
+￥    def __eq__(self, rhs):
+￥        return self.data == rhs.data
+￥
+￥    def __ne__(self, rhs):
+￥        return self.data != rhs.data
+￥
+￥    def __contains__(self, ele):
+￥        return ele in self.data
+￥
+￥
+￥s0 = OrderSet()
+￥s1 = OrderSet([1, 2, 3, 4])
+￥s2 = OrderSet([3, 4, 5])
+￥print(s1 & s2)  # OrderSet([3,4])
+￥print(s1 | s2)  # OrderSet([1,2,3,4,5])
+￥print(s1 - s2)  # OrderSet([1,2])
+￥print(s1 ^ s2)  # OrderSet([1,2,5])
+￥if OrderSet([1, 2, 3]) != OrderSet([1, 2, 3, 4]):
+￥    print("不相等")
+￥# 思考是否可以实现以下操作?
+￥if 2 in s1:
+￥    print("2 在 s1 内")
+￥
+￥if 100 not in s1:
+￥    print("100 不在 s1 内")
+￥

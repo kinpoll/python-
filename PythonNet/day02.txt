@@ -1,0 +1,361 @@
+
+一、tcp套接字传输特征：
+    1.当一段退出时，如果另一端阻塞在recv，此时recv会立即结束阻塞返回空字符串
+    2.如果另一端不存在，则调用send发送时会出现Broken Pipe
+    3.一个监听套接字可以同时连接多个客户端，也可以重复使用
+
+二、网络收发缓冲区
+  缓冲区作用 ：
+    １、减少和磁盘的交互
+    ２、协调收发速度（数据处理速度）
+    *send和recv实际上是和缓冲区进行交互，发送缓冲区满时就无法发送，接收缓冲区满时recv才阻塞
+
+三、TCP粘包
+  产生原因：
+    1.tcp以字节流的方式进行数据传输，消息之间没边界
+    2.多次发送的消息被一次性接收
+  粘包影响：
+    如果每次发送的内容是一个独立含义的个体此时粘包会产生影响
+  处理粘包方法：
+    1. 将消息结构化import struct(具体参详day04.txt)
+    2. 在消息结尾添加结束标志
+    3. 控制消息发送速度
+
+
+四、基于udp协议的数据报套接字的编程
+--1).udp服务端套接字编程流程:
+    1. 创建数据报套接字
+       sockfd = socket(AF_INET,SOCK_DGRAM)
+    2. 绑定地址
+       sockfd.bind(addr)
+    3. 消息的收发
+       data,addr = sockfd.recvfrom(buffersize)
+            功能：接收UDP消息
+            参数：每次最多接收多大的消息
+            返回值：data-->接收到的数据
+                　 addr-->消息发送端的地址
+         
+            * 一次接收一个数据报，如果数据报大小大于buffersize则会丢失部分消息
+      
+       sockfd.sendto(data,addr)
+            功能：发送udp消息
+            参数：data-->发送的消息(bytes格式)
+                 addr-->目标地址
+            返回值：发送的字节数  
+    4. 关闭套接字
+       sockfd.close()
+
+示例：udp服务端编程-------------------------------------------------------------
+import socket
+# 创建套接字
+sockfd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+# 设置绑定地址
+sockfd.bind(('0.0.0.0', 8888))
+
+# 设置监听
+sockfd.listen(5)
+
+print('等待客户端连接...')
+while True:
+
+    # 等待处理客户端的连接
+    connfd, addr = sockfd.accept()
+    print('Connect from', addr)  # 客户端地址
+    while True:
+    
+        # 收发消息
+        data = connfd.recv(1024)
+        if not data:
+            break
+        print('Receive message:\n', data.decode())
+        
+        n = connfd.send('信息以接收'.encode())
+        print('Send %d bytes' % n)
+
+    # 关闭套接字
+    connfd.close()
+sockfd.close()
+----------------------------------------------------------------------    
+--2).udp客户端套接字编程流程
+    1. 创建套接字 
+       socket(AF_INET,SOCK_DGRAM)
+    2. 消息收发
+       recvfrom/sendto
+    3. 关闭套接字
+       close（）
+
+示例：udp客户端编程----------------------------------------------------------------------
+ddr=('127.0.0.1',8888)
+sockfd.connect(server_addr)
+while True:
+    #发／收消息
+    data=input('>>')
+    if not data:
+        break
+    sockfd.send(data.encode())
+    data=sockfd.recv(1024)
+    print('服务器:',data.decode())
+    
+sockfd.close()
+---------------------------------------------------------------------
+--3).cookie
+    1. sys.argv属性
+    功能：将命令行参数以字符串形式收集为一个列表
+    命令本身是 argv[0]
+    后面的参数从argv[1]开始，默认以空格分隔
+    使用引号引起来的内容算作一个整体
+    命令行参数都以字符串放入列表
+---------------------------------------------------
+from socket import *
+import sys
+sockfd=socket(AF_INET,SOCK_DGRAM)
+sockfd.sendto(input().encode(),(sys.argv[1],int(sys.argv[2])))
+sockfd.close()
+----------------------------------------------------    
+    2. 
+    在程序的第一行加
+    #!/usr/bin/env python3
+    添加程序的执行权限
+    chmod  755  file.py
+    修改后即可通过 ./file.py  运行程序
+
+五、tcp套接字编程和udp套接字编程区别
+    1. 流式套接字使用字节流的方式传输，数据报套接字以数据报形式传输数据
+    2. tcp会有粘包现象，udp有消息边界不会形成粘包
+    3. tcp 可以保障数据传输完整性，udp则不保证
+    4. tcp 需要进行listen accept 操作，udp不需要
+    5. tcp收发消息使用新的套接字，recv send。udp使用recvfrom，sendto
+
+六、补充函数
+    sendall(data)
+    功能 ： 发送tcp消息
+    参数 ： 要发送的内容，bytes格式
+    返回值 ： 成功返回 None 失败产生异常
+
+七、套接字对象属性、实例方法
+from socket import *
+s=socket()
+  ①s.family  : 获取套接字地址族类型
+  ②s.type : 获取套接字类型
+  ③s.getsockname() : 获取套接字的绑定地址
+  ④s.fileno() : 获取套接字的文件描述符
+    文件描述符 ： 每一个IO事件操作系统都会分配一个不同的正整数作为编号，该正整数即为这个IO的文件描述符。
+    * 文件描述符是操作系统识别IO的唯一标志
+    stdin ---> 0
+    stdout --> 1
+    stderr --> 2 
+  ⑤s.getpeername() : 获取客户端连接套接字的对应地址
+  ⑥s.setsockopt(level,option,value)
+    功能：设置套接字选项，丰富或者修改套接字属性功能
+    参数：  level 选项类别--->SOL_SOCKET
+           option 具体选项-->SO_REUSEADDR(端口可以立即重用选项)
+           value 选项值----->0/1(关闭/开启))
+  ⑦s.getsockopt(level,option)
+    功能：获取套接字选项值
+    参数：  level 选项类别   SOL_SOCKET
+           option 具体选项
+    返回值：选项值
+    * 如果要设置套接字选项，最好在创建套接字之后立即设置
+
+示例：套接字对象属性、实例方法使用------------------------------------------------------------------------------
+from socket import *
+s=socket()
+
+#设置端口可以立即重用
+s.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+#套接字地址族
+print(s.family)
+#套接字类型
+print(s.type)
+s.bind(('176.234.96.87 ',8888))
+#获取套接字绑定地址
+print(s.getsockname())
+#获取套接字的文件描述符
+print(s.fileno())
+s.listen(6)
+c,addr=s.accept()
+#获取客户端连接套接字的对应地址
+print(c.getpeername())
+#获取套接字选项值
+print(s.getsockopt(SOL_SOCKET,SO_REUSEADDR))
+c.recv(1024)
+c.close()
+s.close()
+--------------------------------------------------------------------------------
+  
+八、udp、tcp应用：
+１、udp 应用之广播
+    广播 ： 一点发送，多点接收
+    广播地址 ： 一个网段内有一个指定的广播地址，是该网段的最大地址。  176.234.96.255
+    广播风暴 ： 一个网络中有大量的广播就会产生广播风暴占用大量带宽，影响正常的访问速度。
+    设置可以发送接收广播
+    s.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
+
+示例：udp广播应用
+广播客服务端------------------------------------------------------------------------------
+from socket import *
+s=socket(AF_INET,SOCK_DGRAM)
+#可以发送接收广播
+s.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
+s.bind(('0.0.0.0',9999))
+while True:
+    try:
+        msg,addr=s.recvfrom(1024)
+        print('从{}获取广播:{}'.format(addr,msg.decode()))
+    except KeyboardInterrupt:
+        print('退出接收')
+        break
+    except Exception as e:
+        print(e)
+s.close()
+广播客户端----------------------------------------------------------------------------
+from socket import *
+from time import sleep
+s=socket(AF_INET,SOCK_DGRAM)
+dest=(('176.234.96.255',9999))
+#可以发送接收广播
+s.setsockopt(SOL_SOCKET,SO_BROADCAST,1)
+
+while True:
+    sleep(2)
+    s.sendto('恭喜你，中奖了'.encode(),dest)
+s.close()
+------------------------------------------------------------------------------
+
+*format()
+    功能：通过参数合成字符串
+    s='{} is a {}'
+    s.format('tom','boy')
+    print(s)#tom is a boy
+    ------------------------
+    s='{1} is a {0}'
+    s.format('tom','boy')
+    print(s)#boy is a tom
+    ------------------------
+    s='{a} is a {b}'
+    s.format(a='tom',b='boy')
+    print(s)#tom is a boy
+
+
+
+2、tcp应用之http传输
+  1.http协议：超文本传输协议，是一个应用层协议
+    用途：
+      网页的获取，数据的传输
+    特点：
+      １．应用层协议，传输层选择tcp传输
+      ２．简单，灵活，很多语言都有http专门接口
+      ３．无状态协议，协议本身不要求记录传输的数据
+      ４．http1.1 支持持久连接
+    网页请求过程：
+      １．客户端（浏览器）通过tcp传输发送http请求给服务端
+      ２．服务端接收到http请求后进行解析
+      ３．服务端处理具体请求内容，组织响应内容
+      ４．将响应内容以http响应格式回发给浏览器
+      ５．浏览器接收响应内容解析展示
+  2.http请求：request
+    请求格式：
+      1.请求行：具体的请求类别和请求路径
+        >格式：   GET   /abc.html   HTTP/1.1
+               请求类别　　请求内容　　协议版本
+        >请求类别：每种类别代表要做不同的事情
+          GET:获取网络资源
+          POST：提交一定的信息，得到反馈
+          HEAD：获取响应头
+          PUT：更新服务器资源
+          DELETE：删除服务器资源
+          CONNECT：
+          TRACE：测试
+          OPTIONS：获取服务器性能信息
+  
+      2.请求头：对请求内容的基本描述
+
+      (空行)
+
+      3.请求体：请求参数或者提交内容
+
+示例：http_test.py(从网页网址栏输入：127.0.0.1:8888  >>可以得到http请求)-----------------------------------------------
+from socket import *
+#创建套接字
+s=socket()
+s.bind(('0.0.0.0',8888))
+s.listen(3)
+
+while True:
+    c,addr=s._accept()
+    print('Connect from',addr)
+    data=c.recv(4096)
+    print('******************')
+    print(data)
+    print('******************')
+    c.close()
+s.close()
+--------------------------------------------------
+作业 ： 
+通过tcp套接字完成一个文件的发送
+将一个文件从客户端发送给服务端，或者从服务端发送给客户端均可。
+文件可以是文本，也可以是图片
+-------------------------------------------------
+①从服务端将'图片'传输到客户端：
+服务端：--------------------------
+from socket import *
+file=open('/home/tarena/桌面/aid1808/O.PNG','rb')
+s=socket()
+s.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+s.bind(('0.0.0.0',8888))
+s.listen(5)
+c,addr=s.accept()
+while True:
+    f=file.readline()
+    if not f:
+        break
+    c.send(f)
+c.close()
+s.close()
+file.close()
+客户端-----------------------------
+from socket import *
+file=open('/home/tarena/桌面/aid1808/D.PNG','wb')
+s=socket()
+s.connect(('127.0.0.1',8888))
+while True:
+    data=s.recv(4096)
+    if not data:
+        break
+    file.write(data)
+s.close()
+file.close()
+-------------------------------------------------------
+-------------------------------------------------
+②从服务端将'文本'传输到客户端：
+服务端：--------------------------
+from socket import *
+file=open('/home/tarena/桌面/aid1808/o.txt','r')
+s=socket()
+s.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
+s.bind(('0.0.0.0',8888))
+s.listen(5)
+c,addr=s.accept()
+while True:
+    f=file.readline()
+    if not f:
+        break
+    c.send(f.encode())
+c.close()
+s.close()
+file.close()
+客户端-----------------------------
+from socket import *
+file=open('/home/tarena/桌面/aid1808/d.txt','w')
+s=socket()
+s.connect(('127.0.0.1',8888))
+while True:
+    data=s.recv(4096)
+    if not data:
+        break
+    file.write(data.decode())
+s.close()
+file.close()
+-------------------------------------------------------
+

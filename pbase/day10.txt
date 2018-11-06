@@ -1,0 +1,518 @@
+day09回顾
+实参-->形参
+
+参数传递：
+ 位置传参
+ 　序列传参(*序列)
+ 关键字传参
+ 　print(1,2,3,sep='#')
+ 　字典关键字传参(**字典)
+
+形参有四种：
+１．位置形参
+２．*元祖形参(接收多余的位置传参：*args)
+３．命名关键字形参（强制使用关键字传参）
+４．**字典形参（接收多余的关键字传参：**kwargs）
+
+缺省参数：
+def fx(a,b=0,*,c,d=0):
+    pass
+fx(1,c=1)
+
+全局变量
+局部变量：函数内部创建的变量是局部变量；函数调用结束之后局部变量自动销毁，如果局部变量和全局变量变量名相同的情况下优先访问局部变量
+
+globals()
+locals()
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+day10笔记：
+函数变量
+》函数名是变量，他在创建时绑定一个函数对象
+ 示例：
+ -----------------------------------------------------------
+ def fn():
+     print('hello world')
+ f1=fn
+ print(f1)#<function fn at 0x7f2f9e220f28>
+ fn()#hello world
+ f1()#hello world
+ f2=fn()
+ print(f2)#None
+ -----------------------------------------------------------
+ def f1():
+     print('hello f1')
+ def f2():
+     print('hello f2')
+ f1,f2=f2,f1
+ f1()#hello f2
+ -----------------------------------------------------------
+
+》一个函数可以作为另一个函数的实参传递：
+ 示例：
+ -----------------------------------------------------------
+ def f1():
+     print('hello f1')
+ def f2():
+     print('hello f2')
+ def fx(fn):
+     print(fn)
+     fn()
+ fx(f1)
+ #            <function f1 at 0x7f1745e4ff28>
+ #            hello f1
+ -----------------------------------------------------------
+ def goodbye(L):
+     for x in L:
+         print('再见：',x)
+ def hello(L):
+     for x in L:
+         print('您好：',x)
+ def fx(fn,L):
+     fn(L)
+ fx(goodbye,['Tom',"Jerry","Spike"])
+ #再见： Tom
+ #再见： Jerry
+ #再见： Spike
+ -----------------------------------------------------------
+ def myinput(fn):
+     L=[1,3,5,7,9]
+     r=fn(L)
+     return r
+ print(myinput(max))#9
+ print(myinput(min))#1
+ print(myinput(sum))#25
+ -----------------------------------------------------------
+ 
+》函数可以作为另一个函数的返回值：
+ 示例：
+ -----------------------------------------------------------
+ def get_function():
+     s=input('请输入您要做的操作：')
+     if s=='求最大':
+         return max
+     if s=='求最小':
+         return min
+     if s=='求和':
+         return sum
+ L=[2,4,6,8,10]
+ f=get_function()
+ print(f(L))
+ -----------------------------------------------------------
+
+》函数的嵌套定义：
+ 函数的嵌套定义是指一个函数里用def语句来创建其他函数的情况
+ 示例：
+ -----------------------------------------------------------------------
+ def fn_outter():
+     print('fn_outter被调用')
+     def fn_inner():
+         print('fn_inner被调用')
+     fn_inner()
+     fn_inner()
+     print('fn_outter调用结束！')
+     return fn_inner
+ f=fn_outter()#具有打印功能,执行结果如下
+ #fn_outter被调用
+ #fn_inner被调用
+ #fn_inner被调用
+ #fn_outter调用结束！
+ f()#相当于　fn_inner()
+ #fn_inner被调用
+ fn_inner()#NameError: name 'fn_inner' is not defined-->当调用fn_outter函数的时候才创建fn_inner函数，未调用之前fn_inner函数未被创建;fn_outter函数调用结束后fn_inner被销毁
+ -----------------------------------------------------------------------
+
+》python作用域：
+ 作用域也叫命名空间，是访问变量时查找变量名的范围空间
+》python的四个作用域：
+ 作用域　　　　　　　　　　　英文                        英文简写
+ 局部作用域（函数内）　　　　local                    　　　L
+ 外部嵌套函数作用域　　　　　Enclosing function local 　　　E 
+ 函数定义所在模块作用域　　　global                   　　　G 
+ python内建模块作用域 　　　Builtin(Python)   　　　　　　　B
+ 示例：
+ ---------------------------------------------------------
+ v=100
+ def f1():
+     v=200
+     print('f1.v=',v)
+     def f2():
+         v=300
+         print('f2.v=',v)
+     f2()
+ f1()
+ print('全局的v=',v)
+ #f1.v= 200　外部嵌套函数作用域Enclosing function local
+ #f2.v= 300 局部作用域local
+ #全局的v= 100 全局（模块内）作用域Global
+ ----------------------------------------------------------
+
+》变量名的查找规则
+ 在访问变量时，先查找本地变量，然后是包裹此函数外部的函数内部变量，之后是全局变量，最后是内建变量
+ 即　L-->E-->G-->B 
+ 在默认情况下，变量名赋值会创建或者改变本地作用域内的变量
+ 
+ 练习：
+ 得出下列程序运行的结果，思考为什么？
+ L=[1,2]
+ def f1():
+     L=[3,4,5]
+ f1()
+ print(L)
+ # def f2():
+ #     L+=[3,4,5]
+ # f2()
+ # print(L)#出错
+ def f3():
+     L[:]=[3,4,5]　#并没有赋值，只是对列表[1,2]进行切片赋值
+ f3()
+ print(L)#[3,4,5]
+
+
+
+》global语句
+ 作用：
+ 告诉解释执行器，global语句声明的一个或多个变量，这些变量的作用域为模块级作用域（也称作全局变量）
+ 全局声明(global)将赋值语句的变量映射到模块文件内部的作用域
+ 语法：
+ global 变量1,变量2,....
+ 示例：
+ -----------------------------
+ v=100
+ def f1():
+     global v #全局声明
+     v=200
+ f1()
+ print('v=',v)
+ ------------------------------
+ 说明：
+ １．全局变量如果要在函数内部被赋值，则必须经过全局声明，否则会被认为是局部变量
+ ２．全局变量在函数内部不经过全局声明就可以访问（取值）
+ ３．不能先声明局部变量，再用global声明为全局变量，此做法不符合规则
+ ４．global变量列表里的变量名不能出现在函数的形参列表里
+ 练习：
+ 写一个函数hello,部分代码如下：
+ count=0
+ def hello(name):
+     print('你好',name)
+     ...此处略
+ 当调用hello函数时，全局变量count自动做加1操作来记录hello被调用的次数
+ 如：
+ hello ('Tom')
+ hello ('Jerry')
+ print('hello函数共被调用%d次'　% count)#2
+ ------------------------------------
+ count=0
+ def hello(name):
+     print('你好',name)
+     global count
+     count+=1
+ hello ('Tom')
+ hello ('Jerry')
+ print('hello函数共被调用了%d次' % count)
+ -------------------------------------------------
+
+》nonlocal语句
+ 作用：
+ 告诉解释执行器，nonlocal声明的变量不是局部变量，也不是全局变量，而是外部嵌套函数内部的变量
+ 语法：
+ nonlocal 变量名1,变量名2,...
+ 示例：
+ var=100
+ def f1():
+     var=200
+     print('f1.var=',var)
+     def f2():
+         nonlocal var
+         var=300 #想修改f1里的var为300
+         print('f2.var=',var)
+     f2()
+     print('f1.var=',var)
+ f1()
+ print('全局的var=',var)
+ 声明：
+ １．nonlocal语句只能在嵌套函数内部进行使用
+ ２．对nonlocal变量列表内的变量赋值将对外部嵌套函数作用域内的变量进行操作
+ ３．当有两层或两层以上的函数时，访问nonlocal变量只对最近的一层的变量进行操作
+ ４．nonlocal语句变量列表内的变量名，不能出现在此函数的形参列表中
+ 示例：
+ var=100
+ def f1():
+     v=200
+     def f2():        
+         v=300 
+         def f3():
+             nonlocal v
+             v=400
+         f3()
+         print('f2.v=',v)
+     f2()
+ f1() #f2.v= 400
+
+》问题：
+def语句：创建一个变量（即函数名）并绑定一个函数对象
+
+》lambda表达式（又名匿名函数）
+ 作用：
+ 创建一个匿名函数对象，同def类似，但不提供函数名
+ 语法：
+ lambda [函数形参列表]：表达式
+ 示例：
+ # def myadd(x,y):
+ #     return x+y
+ # print('20+30=',myadd(20,30))#50
+ # print('100+200=',myadd(100,200))#300
+ #可以用lambda改写为：
+ # myadd=lambda x,y: x+y
+ myadd=lambda*args:sum(args)
+ print('20+30=',myadd(20,30))#50
+ print('100+200=',myadd(100,200))#300
+ 说明：
+ lambda表达式创建的函数只能包含一条表达式且直接返回表达式的值
+ lambda比函数简单，且可以随时创建和销毁，有利于减少程序的耦合度（让程序与程序之间的关联越小越好）
+ 
+ 练习：
+ １．写一个lambda表达式：
+ fx=lambda n:...
+ 此表达是创建函数判断n这个数的2次方＋１能否被５整除，如果能返回True，否则返回False
+ 如：
+ print(fx(3))#True 
+ print(fx(4))#False
+ -------------------------------------
+ fx=lambda n: (n**2+1)%5==0
+ print(fx(3))#True 
+ print(fx(4))#False
+ -------------------------------------
+ 2.写一个lambda表达式来创建函数，此函数返回两个形参变量的最大值
+ def mymax(x,y):
+     ....
+ mymax=lambda ...
+ print(mymax(100,200))#200
+ print(mymax('ABC','123'))#ABC
+ ----------
+ mymax=lambda x,y:max(x,y)
+ print(mymax(100,200))#200
+ print(mymax('ABC','123'))#ABC
+ ----------
+
+
+》eval()和exec()函数
+》eval函数：
+ 作用：
+ 把一个字符串当表达式来执行，返回表达式执行后的结果
+ 格式：
+ eval(source,global=None,local=None)
+ 示例：
+ s='1+2*3'
+ print(eval(s))#7
+ ----------------
+ x=100
+ y=200
+ s='x+y'
+ v=eval(s)
+ print(v)#300
+ #假设局部作用域内有x=1;y=2
+ v2=eval(s,None,{'x':1,'y':2})
+ print(v2)#3
+ #假设局部作用域内有y=2,全局作用域内有x=10，y=20
+ v3=eval(s,{'x':10,'y':20},{'y':2})
+ print(v3)#12
+ --------------------------------------------------
+》exec函数：
+ 作用：
+ 把一个字符串当程序来执行
+ 格式：
+ exec(source,global=None,local=None)
+ 示例：
+ --------------------------------------
+ s='x=100\ny=200\nprint("x+y=",x+y)'
+ exec(s)#x+y=300
+ --------------------------------------
+ s='x=100\ny=200\nprint("x+y=",x+y)'
+ exec(s)#x+y=300
+ --------------------------------------
+ s='print(x+y)\nprint(x*y)'
+ exec(s,{'x':10,'y':20},{'y':2})
+ --------------------------------------
+ --------------------------------------
+练习：
+１．看懂下面的程序在做什么：
+def fx(f,x,y):
+    print(f(x,y))
+fx((lambda a,b:a+b),100,200)
+fx((lambda a,b:a**b),3,4)
+2.给出一个整数n，写一个函数来计算：
+1+2+3+4+...+n的值并返回结果
+要求用函数来做
+如：
+def mysun(n):
+    ...
+print(mysum(100))#5050
+print(mysum(10))#55
+#-----------------------------
+# def mysum(n):
+#     return sum(range(1,n+1))
+# print(mysum(100))#5050
+# print(mysum(10))#55
+#-----------------------------
+3.给出一个整数n，写一个函数来计算n!(n的阶乘)
+n!=1*2*3*4*...*n 
+def myfac(n):
+    ...
+print(myfac(5))#120
+------------------------------------------------------------------------------
+# def myfac(n):
+#     ji=1
+#     for x in range(1,n+1):
+#         ji*=x
+#     return ji
+# print(myfac(5))#120
+------------------------------------------------------------------------------
+4.给出一个整数n,写一个函数来计算1+2**2+3**3+...+n**n的和：
+（n给一个小点的数）
+------------------------------------------------------------------------------
+# def misum(n):
+#     he=0
+#     for x in range(1,n+1):
+#         he+=x**x
+#     return he
+# print(misum(5))#3413
+#方法二：
+def fn(n):
+    return sum(map(lambda x:x**x,range(1,n+1)))
+print(fn(5))
+---------------------------------------------------------------------------------
+5.写程序打印杨辉三角（只打印6层）
+      1
+     1 1
+    1 2 1
+   1 3 3 1
+  1 4 6 4 1
+1 5 10 10 5 1
+#方法一----------------------------------------------------------
+def Pascal(n):
+    L=[1]
+    print('1'.center(2*n-1))
+    while len(L)<n:
+        L.append(0)
+        L=[L[i-1]+L[i] for i in range(len(L))]
+        lst=[str(x) for x in L]        
+        s='　'.join(lst)        
+        print(s.center(2*n-1))
+Pascal(6)
+#方法二-----------------------------------------------------------
+def Pascal(n):
+    L=[1]
+    while len(L)<=n:
+        yield L
+        L.append(0)
+        L=[L[i-1]+L[i] for i in range(len(L))]
+def triangle(n):
+    for i in Pascal(n):
+        L=[str(x) for x in i]
+        s=' '.join(L)
+        print(s.center(n))
+triangle(6)
+# 方法三--------------------------------------------------------------------
+def get_next_list(L):
+    rl=[1]
+    for i in range(len(L)-1):
+        v=L[i]+L[i+1]
+        rl.append(v)
+    rl.append(1)
+    return rl
+def yh_list(n):
+    rl=[]
+    L=[1]
+    while len(rl)<n:
+        rl.append(L)
+        L=get_next_list(L)
+    return rl
+def get_yh_string(L):
+    rl=[]
+    for line in L:
+        st=' '.join([str(x) for x in line])
+        rl.append(st)
+    return rl
+def print_yh_triangle(L):
+    max_len=len(L[-1])
+    for s in L:
+        print(s.center(max_len))
+L=yh_list(6)
+SL=get_yh_string(L)
+print_yh_triangle(SL)
+－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－
+6.实现带界面的学生信息管理系统的项目(-*30)
++------------------------------+
+|1)添加学生信息                  |
+|2)显示学生信息                  |
+|3)删除学生信息                  |
+|4)修改学生成绩                  |
+|5)退出　　　　                  |
++------------------------------+
+(要求：用函数来实现，每个功能写一个函数与之相对应)
+---------------------------------------------------------------------------
+# def main():
+#     print('+------------------------------+')
+#     print('|1)添加学生信息-->               |')
+#     print('|2)显示学生信息-->               |')
+#     print('|3)删除学生信息-->               |')
+#     print('|4)修改学生成绩-->               |')
+#     print('|5)退出-->　　　　               |')
+#     print('+------------------------------+')
+#     global L
+#     L=[]
+#     while True:
+#         s=input("请输入选项（１～６）：")
+#         if s=='1':
+#             input_student()
+#             continue
+#         if s=='2':            
+#             print_student(L)
+#             continue
+#         if s=='3':
+#             del_student(L)
+#             continue
+#         if s=='4':
+#             edi_grades(L)
+#             continue
+#         if s=='5':
+#             break
+#         break
+# def input_student():   
+#     while True:
+#         x=input("请输入姓名:")
+#         if x=='':
+#             break
+#         y=input("请输入年龄:")
+#         z=input("请输入成绩:")
+#         d={'name':x,'age':y,'score':z}
+#         L.append(d)
+#     return L 
+# def print_student(L):
+#     print('+'+'-'*10+'+'+'-'*10+'+'+'-'*10+'+')
+#     print('|'+'name'.center(10)+'|'+'age'.center(10)+'|'+'score'.center(10)+'|')
+#     print('+'+'-'*10+'+'+'-'*10+'+'+'-'*10+'+')
+#     i=0
+#     while i<=(len(L)-1):
+#         print('|'+L[i]['name'].center(10)+'|'+L[i]['age'].center(10)+'|'+L[i]['score'].center(10)+'|')
+#         i+=1
+#     print('+'+'-'*10+'+'+'-'*10+'+'+'-'*10+'+')
+# def del_student(L):   
+#     name=input("请输入要删除学生信息的名字：")
+#     for i in L:
+#         if i['name']==name:
+#             L.remove(i)
+# def edi_grades(L):
+#     name=input("请输入要修改学生成绩的名字：")
+#     for i in L:
+#         if i['name']==name:
+#             print('该学生目前成绩为：',i['score'])
+#             grades=input('请输入修改后的成绩：') 
+#             i['score']=grades     
+# main()
+-----------------------------------------------------------------------------------
+
+ 
+
+
+ 
